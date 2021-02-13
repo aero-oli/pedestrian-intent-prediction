@@ -32,4 +32,4 @@ To remove the anaconda environment, navigate to the repository folder, and run t
 * Sourab Bapu Sridhar
 
 ## License
-[MIT License](LICENSE)
+This project is released under the terms of [MIT License](LICENSE).

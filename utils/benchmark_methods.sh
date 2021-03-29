@@ -5,7 +5,7 @@
 ####################################################################################
 
 # Provide full path to PedestrianActionBenchmark repository
-BENCHMARK_REPO_PATH=/home/sourab/Data/repos/PedestrianActionBenchmark/ # e.g. /home/user/PedestrainActionBenchmark/
+BENCHMARK_REPO_PATH=/home/sourab/Data/repos/PedestrianActionBenchmark # e.g. /home/user/PedestrainActionBenchmark/
 
 ####################################################################################
 ########################### DO NOT MODIFY SETTINGS BELOW ###########################
@@ -13,10 +13,14 @@ BENCHMARK_REPO_PATH=/home/sourab/Data/repos/PedestrianActionBenchmark/ # e.g. /h
 
 # Step 0: Setup Environment
 touch benchmark_log.txt
-echo "Automating benchmarking of existing methods from the \"Pedestrian Action Benchmark\" paper by training and testing each neural network atleast five times" |& tee -a benchmark_log.txt
-echo "Full Path to the Pedestrian Action Benchmark repository is set as follows: ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
-echo "Changing Current Directory to ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
-cd ${BENCHMARK_REPO_PATH} |& tee -a benchmark_log.txt
+echo "Automating benchmarking of existing methods from the \"Pedestrian Action Benchmark\" \
+paper by training and testing each neural network atleast five times" |& tee -a benchmark_log.txt
+echo "Full Path to the Pedestrian Action Benchmark repository is set as follows: \
+${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
+echo "Checking Current Directory against ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
+if [ ${BENCHMARK_REPO_PATH} = $(PWD) ]
+then
+echo "Current Directory Check Successful!!" |& tee -a benchmark_log.txt
 git status |& tee -a benchmark_log.txt
 rm -rf ./models/* |& tee -a benchmark_log.txt
 
@@ -51,3 +55,12 @@ docker/run_docker -sh 0 |& tee -a benchmark_log.txt
 # Step 8: Exit Docker Container
 echo "Step 8: Exit Docker Container" |& tee -a benchmark_log.txt
 exit |& tee -a benchmark_log.txt
+
+
+else
+
+echo "Current Directory Check Unsuccessful!! Current Path: $(PWD), Repo Path Set: ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
+
+fi
+
+

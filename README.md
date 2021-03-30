@@ -16,6 +16,14 @@ Behavior annotations specify behaviors for pedestrians that interact with or req
 - **Full Dataset:** http://data.nvision2.eecs.yorku.ca/JAAD_dataset/data/JAAD_clips.zip
 - **Annotations:** https://github.com/ykotseruba/JAAD
 
+### Pedestrian Intent Estimation (PIE) Dataset [[Link](https://data.nvision2.eecs.yorku.ca/PIE_dataset/)]:
+PIE is a new dataset for studying pedestrian behavior in traffic. PIE contains over 6 hours of footage recorded in typical traffic scenes with on-board camera. It also provides accurate vehicle information from OBD sensor (vehicle speed, heading direction and GPS coordinates) synchronized with video footage. Rich spatial and behavioral annotations are available for pedestrians and vehicles that potentially interact with the ego-vehicle as well as for the relevant elements of infrastructure (traffic lights, signs and zebra crossings).
+
+There are over 300K labeled video frames with 1842 pedestrian samples making this the largest publicly available dataset for studying pedestrian behavior in traffic.
+
+- **Full Dataset:** http://data.nvision2.eecs.yorku.ca/PIE_dataset/PIE_clips/
+- **Annotations:** https://github.com/aras62/PIE
+
 ## Requirements
 The code is based on Python3 (>=3.8). There are a few dependencies to run the code. The major libraries are listed as follows:
 * Tensorflow (>=2.3.0)

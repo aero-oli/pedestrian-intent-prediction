@@ -1,66 +1,74 @@
 #!/bin/bash
 
-####################################################################################
-######################### UPDATE PATHS BELOW BEFORE RUNNING ########################
-####################################################################################
+#########################################################################################################
+################################### UPDATE PATHS BELOW BEFORE RUNNING ###################################
+#########################################################################################################
 
 # Provide full path to PedestrianActionBenchmark repository
-BENCHMARK_REPO_PATH=/home/sourab/Data/repos/PedestrianActionBenchmark # e.g. /home/user/PedestrainActionBenchmark/
+BENCHMARK_REPO_PATH=/home/sourab/Data/test_folder/PedestrianActionBenchmark #e.g. /home/user/PedestrainActionBenchmark
+JAAD_REPO_PATH=/home/Datasets/MLDatasetsStorage/JAAD                        #e.g. /home/user/JAAD
+PIE_REPO_PATH=/home/Datasets/MLDatasetsStorage/PIE                          #e.g. /home/user/PIE
+SEQ_LEN=1                                                                   #e.g. 10,20,...
+ 
+#########################################################################################################
+##################################### DO NOT MODIFY SETTINGS BELOW ######################################
+#########################################################################################################
 
-####################################################################################
-########################### DO NOT MODIFY SETTINGS BELOW ###########################
-####################################################################################
+# Cleanup (Temproary Step)
 
-# Step 0: Setup Environment
-touch benchmark_log.txt
-echo "Automating benchmarking of existing methods from the \"Pedestrian Action Benchmark\" \
-paper by training and testing each neural network atleast five times" |& tee -a benchmark_log.txt
-echo "Full Path to the Pedestrian Action Benchmark repository is set as follows: \
-${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
-echo "Checking Current Directory against ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
-if [ ${BENCHMARK_REPO_PATH} = $(PWD) ]
-then
-echo "Current Directory Check Successful!!" |& tee -a benchmark_log.txt
-git status |& tee -a benchmark_log.txt
-rm -rf ./models/* |& tee -a benchmark_log.txt
+# Print Provided Path
+echo "Path to the Pedestrian Action Benchmark repository: $BENCHMARK_REPO_PATH"
+echo "Path to the JAAD repository: $JAAD_REPO_PATH"
+echo "Path to the PIE repository: $PIE_REPO_PATH"
+echo ""
 
-# Step 1: Download and extract PIE and JAAD datasets
-echo "Step 1: Download and extract PIE and JAAD datasets" |& tee -a benchmark_log.txt
-echo "Current Assumption: This step is already done!" |& tee -a benchmark_log.txt
+# Clone the repository
+echo "Cloning the repository..."
+echo ""
+git clone https://github.com/ykotseruba/PedestrianActionBenchmark.git $BENCHMARK_REPO_PATH
 
-# Step 2: Download Python data interface
-echo "Step 2: Download Python data interface" |& tee -a benchmark_log.txt
-echo "Current Assumption: This step is already done!" |& tee -a benchmark_log.txt
+# Download python data interfaces
+echo "Downloading python data interfaces..."
+echo ""
+cp -v $JAAD_REPO_PATH/jaad_data.py $BENCHMARK_REPO_PATH/
+cp -v $PIE_REPO_PATH/pie_data.py $BENCHMARK_REPO_PATH/
 
-# Step 3: Install Docker
-echo "Step 3: Install Docker" |& tee -a benchmark_log.txt
-echo "Current Assumption: This step is already done!" |& tee -a benchmark_log.txt
+# Change Permission for scripts in the docker folder
+echo "Changing permission for scripts in the docker folder..."
+echo ""
+cd $BENCHMARK_REPO_PATH
+chmod +x docker/*.sh
 
-# Step 4: Change Permission for scripts in the docker folder
-echo "Step 4: Change Permission for scripts in the docker folder" |& tee -a benchmark_log.txt
-chmod +x docker/*.sh |& tee -a benchmark_log.txt
+# Build Docker Image
+echo "Building Docker Images..."
+echo ""
+bash docker/build_docker.sh
 
-# Step 5: Build Docker Image
-echo "Step 5: Build Docker Image" |& tee -a benchmark_log.txt
-docker/build_docker.sh |& tee -a benchmark_log.txt
+# Set paths for PIE and JAAD Datasets in docker/run_docker.sh
+echo "Setting paths for PIE and JAAD Datasets in docker/run_docker.sh..."
+echo ""
 
-# Step 6: Set Paths for PIE and JAAD datasets in docker/run_docker.sh
-echo "Step 6: Set Paths for PIE and JAAD datasets in docker/run_docker.sh" |& tee -a benchmark_log.txt
-echo "Current Assumption: This step is already done!" |& tee -a benchmark_log.txt
+# Update configuration files for training and testing
+echo "Updating configuration files for training and testing..."
+echo ""
 
-# Step 7: Run Docker Container
-echo "Step 7: Run Docker Container" |& tee -a benchmark_log.txt
-docker/run_docker -sh 0 |& tee -a benchmark_log.txt
+# Run docker/run_docker.sh
+echo "Running docker/run_docker.sh..."
+echo ""
 
-# Step 8: Exit Docker Container
-echo "Step 8: Exit Docker Container" |& tee -a benchmark_log.txt
-exit |& tee -a benchmark_log.txt
+# Run the shell script from the docker container
+echo "Running the shell script from the docker container..."
+echo ""
 
+# Train and test models
+echo "Training and testing models..."
+echo ""
 
-else
+# Store metrics
+echo "Storing metrics..."
+echo ""
 
-echo "Current Directory Check Unsuccessful!! Current Path: $(PWD), Repo Path Set: ${BENCHMARK_REPO_PATH}" |& tee -a benchmark_log.txt
-
-fi
-
+# Exit Docker Container
+echo "Exiting Docker container..."
+echo ""
 

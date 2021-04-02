@@ -15,10 +15,10 @@ SEQ_LEN=1                                                                   #e.g
 ##################################### DO NOT MODIFY SETTINGS BELOW ######################################
 #########################################################################################################
 
-# Cleanup (Temproary Step)
-echo "Cleaning up environment (Temproary Step)"
+# Cleanup Environment
+echo "Cleaning up environment..."
 echo ""
-rm -rf ~/Data/test_folder2/*
+rm -rf $BENCHMARK_REPO_PATH
 docker system prune -af
 
 # Print current path and provided path
@@ -29,12 +29,12 @@ echo "Path to the PIE repository: $PIE_REPO_PATH"
 echo ""
 
 
-# Cleanup output folder
-echo "Cleaning up output folder..."
+# Cleanup output directory
+echo "Cleaning up output directory..."
 echo ""
 OUTPUT_PATH="$(dirname "$PWD")/benchmark/$BENCHMARK_VENV"
 rm -rf $OUTPUT_PATH
-mkdir $OUTPUT_PATH
+mkdir $OUTPUT_PATH && echo "Output directory cleanup successful!"
 
 # Clone the repository
 echo "Cloning the repository..."
@@ -51,7 +51,7 @@ cp -v $PIE_REPO_PATH/pie_data.py $BENCHMARK_REPO_PATH/
 echo "Changing permission for scripts in the docker folder..."
 echo ""
 cd $BENCHMARK_REPO_PATH
-chmod +x docker/*.sh
+chmod +x docker/*.sh && echo "Permssion for scripts in focker folder changed!"
 
 # Build Docker Image
 echo "Building Docker Images..."
@@ -65,7 +65,7 @@ sed -i "s@PIE_DATA=.*@PIE_DATA=$PIE_REPO_PATH@" $BENCHMARK_REPO_PATH/docker/run_
 sed -i "s@JAAD_DATA=.*@JAAD_DATA=$JAAD_REPO_PATH@" $BENCHMARK_REPO_PATH/docker/run_docker.sh && echo "JAAD_DATA successfully set!"
 sed -i "s@MODELS=.*@MODELS=$OUTPUT_PATH@" $BENCHMARK_REPO_PATH/docker/run_docker.sh && echo "MODELS successfully set!"
 sed -i "s@CODE_FOLDER=.*@CODE_FOLDER=$BENCHMARK_REPO_PATH@" $BENCHMARK_REPO_PATH/docker/run_docker.sh && echo "CODE_FOLDER successfully set!"
-sed -i "s/-it/-d" $BENCHMARK_REPO_PATH/docker/run-docker.sh && echo "Docker Mode Successfully changed from iteractive to detached!"
+sed -i "s@-it@-itd@" $BENCHMARK_REPO_PATH/docker/run_docker.sh && echo "Docker mode detached added successfully!"
 echo ""
 
 # Update configuration files for training and testing
@@ -121,7 +121,7 @@ sed -i "s/\[0.0000005,/\[/" $BENCHMARK_REPO_PATH/config_files/Two_Stream.yaml &&
 echo ""
 
 echo "Updating configuration for configs_default model..."
-sed -i "s/dataset:.*/dataset:\sjaad/" $BENCHMARK_REPO_PATH/config_files/configs_default.yaml && echo "Default dataset updated"
+sed -i "s/dataset:.*/dataset: jaad/" $BENCHMARK_REPO_PATH/config_files/configs_default.yaml && echo "Default dataset updated"
 echo ""
 
 # Run docker/run_docker.sh
@@ -129,18 +129,20 @@ echo "Running docker/run_docker.sh..."
 echo ""
 source $BENCHMARK_REPO_PATH/docker/run_docker.sh -gd 0
 
-# Run the shell script from the docker container
-echo "Running the shell script from the docker container..."
-echo ""
-
 # Train and test models
 echo "Training and testing models..."
 echo ""
 
-# Store metrics
-echo "Storing metrics..."
-echo ""
+for loop_counter in $(seq 1 $SEQ_LEN)
+do
+
+echo "--------------------------- TRAINING NUMBER: $loop_counter ------------------------------"
+
+docker exec -it tf2_run bash -c "python train_test.py -c config_files/PCPA.yaml"
+
+done
 
 # Exit Docker Container
 echo "Exiting Docker container..."
 echo ""
+exit

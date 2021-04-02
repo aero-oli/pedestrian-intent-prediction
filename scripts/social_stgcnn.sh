@@ -7,16 +7,16 @@
 # Provide full path to the Social-STGCNN repository
 SOCIAL_STGCNN_REPO=/home/sourab/Data/test_folder/Social-STGCNN #e.g. /home/user/repos/SOCIAL-STGCNNN
 SOCIAL_STGCNN_VENV=Social-STGCNN                               #e.g. Social-STGCNN
-SEQ_LEN=1                                                      #e.g. 10,20
+SEQ_LEN=5                                                      #e.g. 10,20
 
 ####################################################################################################
 ################################### DO NOT MODIFY SETTINGS BELOW ###################################
 ####################################################################################################
 
-# Cleanup (Temproary Step)
-echo "Cleaning up environment (Temproary Step)"
+# Cleanup environment
+echo "Cleaning up environment..."
 echo ""
-rm -rf ~/Data/test_folder/*
+rm -rf $SOCIAL_STGCNN_REPO
 conda remove --name $SOCIAL_STGCNN_VENV --all --yes
 
 # Cleanup output directory
@@ -45,6 +45,7 @@ conda init bash
 # Create a conda virtual environment
 echo "Creating a conda virtual environment..."
 echo ""
+source ~/Data/miniconda3/etc/profile.d/conda.sh               # Workaround since conda activate does not seem to work from bash file
 conda create --yes --name $SOCIAL_STGCNN_VENV python=3.6
 conda activate $SOCIAL_STGCNN_VENV
 
@@ -97,7 +98,7 @@ mv -v $SOCIAL_STGCNN_REPO/training_hotel_${loop_counter}.txt  $SOCIAL_STGCNN_REP
 mv -v $SOCIAL_STGCNN_REPO/training_univ_${loop_counter}.txt  $SOCIAL_STGCNN_REPO/checkpoint/social-stgcnn-univ/
 mv -v $SOCIAL_STGCNN_REPO/training_zara1_${loop_counter}.txt  $SOCIAL_STGCNN_REPO/checkpoint/social-stgcnn-zara1/
 mv -v $SOCIAL_STGCNN_REPO/training_zara2_${loop_counter}.txt  $SOCIAL_STGCNN_REPO/checkpoint/social-stgcnn-zara2/
-cp -rv $SOCIAL_STGCNN_REPO/checkpoint/* $OUTPUT_PATH/Experiment_${loop_counter}
+mkdir -p $OUTPUT_PATH/Experiment_${loop_counter} && cp -rv $SOCIAL_STGCNN_REPO/checkpoint/* $OUTPUT_PATH/Experiment_${loop_counter}
 
 done
 

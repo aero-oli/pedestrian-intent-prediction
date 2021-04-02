@@ -59,7 +59,7 @@ cp -v $PIE_REPO_PATH/pie_data.py $BENCHMARK_REPO_PATH/
 echo "Changing permission for scripts in the docker folder..."
 echo ""
 cd $BENCHMARK_REPO_PATH
-chmod +x docker/*.sh && echo "Permssion for scripts in focker folder changed!"
+chmod +x docker/*.sh && echo "Permission for scripts in docker folder changed!"
 
 # Build Docker Image
 echo "Building Docker Images..."

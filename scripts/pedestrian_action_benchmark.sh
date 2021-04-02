@@ -6,10 +6,18 @@
 
 # Provide full path to PedestrianActionBenchmark repository
 BENCHMARK_REPO_PATH=/home/sourab/Data/temp2/PedestrianActionBenchmark  #e.g. /home/user/PedestrainActionBenchmark
+
+# Provide full path to the dataset folders
 JAAD_REPO_PATH=/home/Datasets/MLDatasetsStorage/JAAD                   #e.g. /home/user/JAAD
 PIE_REPO_PATH=/home/Datasets/MLDatasetsStorage/PIE                     #e.g. /home/user/PIE
+
+# Provide a name to the virtual environment
 BENCHMARK_VENV=Pedestrian_Action_Benchmark                             #e.g. Pedestrian_Action_Benchmark
+
+# Provide the total count of the experiments to be performed
 SEQ_LEN=1                                                              #e.g. 10,20,...
+
+# Provide full path to the script folder
 SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts            #e.g. /home/user/master-thesis/scripts
  
 #################################################################################################################

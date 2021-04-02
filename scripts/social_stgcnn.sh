@@ -5,10 +5,16 @@
 #####################################################################################################
 
 # Provide full path to the Social-STGCNN repository
-SOCIAL_STGCNN_REPO=/home/sourab/Data/test_folder/Social-STGCNN # e.g. /home/user/repos/SOCIAL-STGCNNN
-SOCIAL_STGCNN_VENV=Social-STGCNN                               # e.g. Social-STGCNN
-SEQ_LEN=1                                                      # e.g. 10,20,...
-SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts    # e.g. /home/user/master-thesis/scipts
+SOCIAL_STGCNN_REPO=/home/sourab/Data/temp1/Social-STGCNN    #e.g. /home/user/repos/SOCIAL-STGCNNN
+
+# Provide a name to the conda virtual environment
+SOCIAL_STGCNN_VENV=Social-STGCNN                            #e.g. Social-STGCNN
+
+# Provide the total count of the experiments to be performed
+SEQ_LEN=1                                                   #e.g. 10,20,...
+
+# Provide full path to the script folder
+SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts #e.g. /home/user/master-thesis/scipts
 
 #####################################################################################################
 ################################### DO NOT MODIFY SETTINGS BELOW ####################################

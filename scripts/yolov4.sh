@@ -5,10 +5,10 @@
 ##############################################################################################################
 
 # Provide full path to the darknet repository
-DARKNET_REPO_PATH=/home/sourab/Data/repos/darknet                           #e.g. /home/user/darknet
+DARKNET_REPO_PATH=/home/sourab/Data/temp3/darknet                           #e.g. /home/user/darknet
 
 # Provide full paths to the road-object-detection-using-yolo-v4 repository
-ROAD_REPO_PATH=/home/sourab/Data/repos/road-object-detection-using-yolov4   #e.g. /home/user/repo-name
+ROAD_REPO_PATH=/home/sourab/Data/temp3/road-object-detection-using-yolov4   #e.g. /home/user/repo-name
 
 # Provide full path to the dataset
 DATA_PATH=/home/sourab/Data/dataset/DeepDrive                               #e.g. /home/user/DeepDrive
@@ -95,7 +95,7 @@ python $ROAD_REPO_PATH/utils/data_cleanup.py -i $DARKNET_REPO_PATH/data/bdd100k/
 # Generate paths for training and validation images
 echo "Generating paths for training and validation images..."
 echo ""
-python $ROAD_REPO_PATH/utils/generate_paths.py -it $DARKNET_REPO_PATH/data/bdd100k/images/100k/train/ -iv $DARKNET_REPO_PATH/data/bdd100k/images/100k/val/ -o $DARKNET_REPO_PATH/data/bdd100k/ && echo "Generated paths for training and validation images successfully!"
+python $ROAD_REPO_PATH/utils/generate_paths.py -it data/bdd100k/images/100k/train/ -iv data/bdd100k/images/100k/val/ -o $DARKNET_REPO_PATH/data/bdd100k/ && echo "Generated paths for training and validation images successfully!"
 
 # Copy pre-defined YOLOv4 network configuration file to cfg folder
 echo "Copying pre-defined YOLOv4 network configuration file to cfg folder..."
@@ -105,30 +105,25 @@ cp -vi $ROAD_REPO_PATH/config/* $DARKNET_REPO_PATH/cfg/ && echo "Pre-defined YOL
 # Edit bdd100k.data file
 echo "Editing bdd100k.data file..."
 echo ""
-sed -i 's/data\/train.txt/data\/bdd100k\/bdd100k_train.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data
-sed -i 's/data\/test.txt/data\/bdd100k\/bdd100k_val.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data
-sed -i 's/data\/BDD100K.names/data\/bdd100k\/bdd100k.names/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data
-
-# Edit paths for training and validation images
-echo "Editing paths for training and calidation images..."
-echo ""
-sed -i "s@\'@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt
-sed -i "s@\'@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt
+sed -i 's/data\/train.txt/data\/bdd100k\/bdd100k_train.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited training path successfully!"
+sed -i 's/data\/test.txt/data\/bdd100k\/bdd100k_val.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited validation path successfully!"
+sed -i 's/data\/BDD100K.names/data\/bdd100k\/bdd100k.names/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited path to bdd100k.names file successfully!"
 
 # Edit paths in training and validation images
-echo "Editing paths in training and validation images..."
-echo ""
-sed -i "s@/home/sourab/Data/repos/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt
-sed -i "s@/home/sourab/Data/repos/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt	
-sed -i "s@'@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt
-sed -i "s@'@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt
+#echo "Editing paths in training and validation images..."
+#echo ""
+#sed -i "s@/home/sourab/Data/temp3/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt && echo "Edited training paths successfully!"
+#sed -i "s@/home/sourab/Data/temp3/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt	&& echo "Edited validation paths successfully!"
+#sed -i "s@'@@g" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt && echo "Removed apostophe from training path file successfully!"
+#sed -i "s@'@@g" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt && echo "Removed apostophe from validation path file successfully!"
 
 # Train YOLOV4 on Berkley DeepDrive dataset
-#echo "Training YOLOv4 on Berkley DeepDrive dataset..."
-#echo ""
-./darknet detector train $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data $DARKNET_REPO_PATH/cfg/yolov4-tiny-bdd100k.cfg $DARKNET_REPO_PATH/yolov4-tiny.conv.29 -dont_show -map
+echo "Training YOLOv4 on Berkley DeepDrive dataset..."
+echo ""
+chmod +x darknet
+./darknet detector train data/bdd100k/bdd100k.data cfg/yolov4-tiny-bdd100k.cfg yolov4-tiny.conv.29 -dont_show -map
 
 # Exit script
-#echo "Exiting script..."
-#echo ""
+echo "Exiting script..."
+echo ""
 

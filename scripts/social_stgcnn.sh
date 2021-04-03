@@ -11,7 +11,7 @@ SOCIAL_STGCNN_REPO=/home/sourab/Data/temp1/Social-STGCNN    #e.g. /home/user/rep
 SOCIAL_STGCNN_VENV=Social-STGCNN                            #e.g. Social-STGCNN
 
 # Provide the total count of the experiments to be performed
-SEQ_LEN=1                                                   #e.g. 10,20,...
+SEQ_LEN=5                                                   #e.g. 10,20,...
 
 # Provide full path to the script folder
 SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts #e.g. /home/user/master-thesis/scipts
@@ -113,4 +113,4 @@ done
 echo "Deactivating Conda Environment..."
 echo ""
 conda deactivate
-
+return 0

@@ -78,7 +78,7 @@ rm -rf $DARKNET_REPO_PATH/data/bdd100k/images/10k && echo "10k image folder dele
 # Copy bdd100k.data and bdd100k.names files
 echo "Copying bdd100k.data and bdd100k.names files..."
 echo ""
-cp -vi $ROAD_REPO_PATH/data/* $DARKNET_REPO_PATH/data/bdd100k/ && echo "Copied bd100k.data and bdd100k.names successfully!"
+cp -vi $ROAD_REPO_PATH/data/* $DARKNET_REPO_PATH/data/bdd100k/ && echo "Copied bdd100k.names successfully!"
 
 # Convert labels from JSON files to text files
 echo "Converting JSON files to text files..."
@@ -102,20 +102,10 @@ echo "Copying pre-defined YOLOv4 network configuration file to cfg folder..."
 echo ""
 cp -vi $ROAD_REPO_PATH/config/* $DARKNET_REPO_PATH/cfg/ && echo "Pre-defined YOLOv4 config copied successfully!"
 
-# Edit bdd100k.data file
-echo "Editing bdd100k.data file..."
+# Generate data file containing relative paths to the training, validation and backup folders for YOLOv4
+echo "Generating data file containing relative paths to the training, validation and backup folders for YOLOv4..."
 echo ""
-sed -i 's/data\/train.txt/data\/bdd100k\/bdd100k_train.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited training path successfully!"
-sed -i 's/data\/test.txt/data\/bdd100k\/bdd100k_val.txt/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited validation path successfully!"
-sed -i 's/data\/BDD100K.names/data\/bdd100k\/bdd100k.names/' $DARKNET_REPO_PATH/data/bdd100k/bdd100k.data && echo "Edited path to bdd100k.names file successfully!"
-
-# Edit paths in training and validation images
-#echo "Editing paths in training and validation images..."
-#echo ""
-#sed -i "s@/home/sourab/Data/temp3/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt && echo "Edited training paths successfully!"
-#sed -i "s@/home/sourab/Data/temp3/darknet/@@" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt	&& echo "Edited validation paths successfully!"
-#sed -i "s@'@@g" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_train.txt && echo "Removed apostophe from training path file successfully!"
-#sed -i "s@'@@g" $DARKNET_REPO_PATH/data/bdd100k/bdd100k_val.txt && echo "Removed apostophe from validation path file successfully!"
+python $ROAD_REPO_PATH/utils/generate_data_file.py -c 10 -t data/bdd100k/bdd100k_train.txt -v data/bdd100k/bdd100k_val.txt -n data/bdd100k/bdd100k.names -b backup/ -o $DARKNET_REPO_PATH/data/bdd100k/
 
 # Train YOLOV4 on Berkley DeepDrive dataset
 echo "Training YOLOv4 on Berkley DeepDrive dataset..."
@@ -126,4 +116,4 @@ chmod +x darknet
 # Exit script
 echo "Exiting script..."
 echo ""
-
+return 0

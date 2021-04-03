@@ -15,7 +15,7 @@ PIE_REPO_PATH=/home/Datasets/MLDatasetsStorage/PIE                     #e.g. /ho
 BENCHMARK_VENV=Pedestrian_Action_Benchmark                             #e.g. Pedestrian_Action_Benchmark
 
 # Provide the total count of the experiments to be performed
-SEQ_LEN=1                                                              #e.g. 10,20,...
+SEQ_LEN=5                                                              #e.g. 10,20,...
 
 # Provide full path to the script folder
 SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts            #e.g. /home/user/master-thesis/scripts
@@ -28,6 +28,8 @@ SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts            #e.g. /ho
 echo "Cleaning up environment..."
 echo ""
 rm -rf $BENCHMARK_REPO_PATH
+docker rm -vf $(docker ps -a -q)
+docker rmi -f $(docker images -a -q)
 docker system prune -af
 
 # Cleanup output directory
@@ -153,4 +155,4 @@ done
 # Exit Docker Container
 echo "Exiting Docker container..."
 echo ""
-exit
+return 0

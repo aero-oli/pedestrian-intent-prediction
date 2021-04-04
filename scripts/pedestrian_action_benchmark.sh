@@ -1,40 +1,50 @@
 #!/bin/bash
 
-#########################################################################################################
-################################### UPDATE PATHS BELOW BEFORE RUNNING ###################################
-#########################################################################################################
+#################################################################################################################
+################################### UPDATE PATHS BELOW BEFORE RUNNING ###########################################
+#################################################################################################################
 
 # Provide full path to PedestrianActionBenchmark repository
-BENCHMARK_REPO_PATH=/home/sourab/Data/test_folder2/PedestrianActionBenchmark #e.g. /home/user/PedestrainActionBenchmark
-JAAD_REPO_PATH=/home/Datasets/MLDatasetsStorage/JAAD                        #e.g. /home/user/JAAD
-PIE_REPO_PATH=/home/Datasets/MLDatasetsStorage/PIE                          #e.g. /home/user/PIE
-BENCHMARK_VENV=Pedestrian_Action_Benchmark                                  #e.g. Pedestrian_Action_Benchmark
-SEQ_LEN=1                                                                   #e.g. 10,20,...
+BENCHMARK_REPO_PATH=/home/sourab/Data/temp2/PedestrianActionBenchmark  #e.g. /home/user/PedestrainActionBenchmark
+
+# Provide full path to the dataset folders
+JAAD_REPO_PATH=/home/Datasets/MLDatasetsStorage/JAAD                   #e.g. /home/user/JAAD
+PIE_REPO_PATH=/home/Datasets/MLDatasetsStorage/PIE                     #e.g. /home/user/PIE
+
+# Provide a name to the virtual environment
+BENCHMARK_VENV=Pedestrian_Action_Benchmark                             #e.g. Pedestrian_Action_Benchmark
+
+# Provide the total count of the experiments to be performed
+SEQ_LEN=5                                                              #e.g. 10,20,...
+
+# Provide full path to the script folder
+SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts            #e.g. /home/user/master-thesis/scripts
  
-#########################################################################################################
-##################################### DO NOT MODIFY SETTINGS BELOW ######################################
-#########################################################################################################
+#################################################################################################################
+##################################### DO NOT MODIFY SETTINGS BELOW ##############################################
+#################################################################################################################
 
 # Cleanup Environment
 echo "Cleaning up environment..."
 echo ""
 rm -rf $BENCHMARK_REPO_PATH
+docker rm -vf $(docker ps -a -q)
+docker rmi -f $(docker images -a -q)
 docker system prune -af
-
-# Print current path and provided path
-echo "Path of the bash script: $PWD"
-echo "Path to the Pedestrian Action Benchmark repository: $BENCHMARK_REPO_PATH"
-echo "Path to the JAAD repository: $JAAD_REPO_PATH"
-echo "Path to the PIE repository: $PIE_REPO_PATH"
-echo ""
-
 
 # Cleanup output directory
 echo "Cleaning up output directory..."
 echo ""
-OUTPUT_PATH="$(dirname "$PWD")/benchmark/$BENCHMARK_VENV"
+OUTPUT_PATH="$(dirname "$SCRIPT_FOLDER")/benchmark/$BENCHMARK_VENV"
 rm -rf $OUTPUT_PATH
 mkdir $OUTPUT_PATH && echo "Output directory cleanup successful!"
+
+# Print current path and provided path
+echo "Path of the bash script: $SCRIPT_FOLDER"
+echo "Path to the Pedestrian Action Benchmark repository: $BENCHMARK_REPO_PATH"
+echo "Path to the JAAD repository: $JAAD_REPO_PATH"
+echo "Path to the PIE repository: $PIE_REPO_PATH"
+echo ""
 
 # Clone the repository
 echo "Cloning the repository..."
@@ -51,7 +61,7 @@ cp -v $PIE_REPO_PATH/pie_data.py $BENCHMARK_REPO_PATH/
 echo "Changing permission for scripts in the docker folder..."
 echo ""
 cd $BENCHMARK_REPO_PATH
-chmod +x docker/*.sh && echo "Permssion for scripts in focker folder changed!"
+chmod +x docker/*.sh && echo "Permission for scripts in docker folder changed!"
 
 # Build Docker Image
 echo "Building Docker Images..."
@@ -145,4 +155,4 @@ done
 # Exit Docker Container
 echo "Exiting Docker container..."
 echo ""
-exit
+return 0

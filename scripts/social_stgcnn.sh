@@ -1,17 +1,24 @@
 #!/bin/bash
 
-####################################################################################################
-################################### UPDATE PATHS BELOW BEFORE RUNNING ##############################
-####################################################################################################
+#####################################################################################################
+################################### UPDATE PATHS BELOW BEFORE RUNNING ###############################
+#####################################################################################################
 
 # Provide full path to the Social-STGCNN repository
-SOCIAL_STGCNN_REPO=/home/sourab/Data/test_folder/Social-STGCNN #e.g. /home/user/repos/SOCIAL-STGCNNN
-SOCIAL_STGCNN_VENV=Social-STGCNN                               #e.g. Social-STGCNN
-SEQ_LEN=5                                                      #e.g. 10,20
+SOCIAL_STGCNN_REPO=/home/sourab/Data/temp1/Social-STGCNN    #e.g. /home/user/repos/SOCIAL-STGCNNN
 
-####################################################################################################
-################################### DO NOT MODIFY SETTINGS BELOW ###################################
-####################################################################################################
+# Provide a name to the conda virtual environment
+SOCIAL_STGCNN_VENV=Social-STGCNN                            #e.g. Social-STGCNN
+
+# Provide the total count of the experiments to be performed
+SEQ_LEN=5                                                   #e.g. 10,20,...
+
+# Provide full path to the script folder
+SCRIPT_FOLDER=/home/sourab/Data/repos/master-thesis/scripts #e.g. /home/user/master-thesis/scipts
+
+#####################################################################################################
+################################### DO NOT MODIFY SETTINGS BELOW ####################################
+#####################################################################################################
 
 # Cleanup environment
 echo "Cleaning up environment..."
@@ -22,12 +29,12 @@ conda remove --name $SOCIAL_STGCNN_VENV --all --yes
 # Cleanup output directory
 echo "Cleaning up output directory..."
 echo ""
-OUTPUT_PATH="$(dirname "$PWD")/benchmark/$SOCIAL_STGCNN_VENV"
+OUTPUT_PATH="$(dirname "$SCRIPT_FOLDER")/benchmark/$SOCIAL_STGCNN_VENV"
 rm -rf $OUTPUT_PATH
-mkdir $OUTPUT_PATH
+mkdir $OUTPUT_PATH && echo "Output directory cleanup successful!"
 
-# Print current path and provided path
-echo "Path of the bash script: $PWD"
+# Print the important paths
+echo "Path of the bash script: $SCRIPT_FOLDER"
 echo "Path to the Social-STGCNN repository: $SOCIAL_STGCNN_REPO"
 echo "Path to the output directory: $OUTPUT_PATH"
 echo ""
@@ -37,15 +44,15 @@ echo "Cloning the repository..."
 echo ""
 git clone https://github.com/abduallahmohamed/Social-STGCNN.git $SOCIAL_STGCNN_REPO
 
-# Activate conda virtual environment to run from Bash
-echo "Activating conda virtual environment to run from Bash"
+# Activate conda virtual environment to run from bash
+echo "Activating conda virtual environment to run from bash..."
 echo ""
 conda init bash
 
 # Create a conda virtual environment
 echo "Creating a conda virtual environment..."
 echo ""
-source ~/Data/miniconda3/etc/profile.d/conda.sh               # Workaround since conda activate does not seem to work from bash file
+source ~/Data/miniconda3/etc/profile.d/conda.sh                # Workaround (conda activate does not work from bash)
 conda create --yes --name $SOCIAL_STGCNN_VENV python=3.6
 conda activate $SOCIAL_STGCNN_VENV
 
@@ -106,4 +113,4 @@ done
 echo "Deactivating Conda Environment..."
 echo ""
 conda deactivate
-
+return 0

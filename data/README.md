@@ -1,3 +1,6 @@
-# Instruction for Dataset Folder
+# Instruction for Data Folder
 
-Place your dataset in this folder while implementing your code. Since all the contents of this folder (except this file) are ignored, any changes made in this folder would not be tracked by your personal git client.
+Place your data in this folder while implementing your code. The data may include:
+1. [Training dataset]()
+2. [Figures]()
+3. [Training Parameters]()

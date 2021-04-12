@@ -75,8 +75,8 @@ rm -rf $DARKNET_REPO_PATH/data/bdd100k_images.zip && echo "bdd100k_images.zip de
 rm -rf $DARKNET_REPO_PATH/data/bdd100k_labels_release.zip && echo "bdd100k_labels-release.zip delected successfully!"
 rm -rf $DARKNET_REPO_PATH/data/bdd100k/images/10k && echo "10k image folder deleted successfully!"
 
-# Copy bdd100k.data and bdd100k.names files
-echo "Copying bdd100k.data and bdd100k.names files..."
+# Copy bdd100k.names files
+echo "Copying bdd100k.names files..."
 echo ""
 cp -vi $ROAD_REPO_PATH/data/* $DARKNET_REPO_PATH/data/bdd100k/ && echo "Copied bdd100k.names successfully!"
 
@@ -97,15 +97,15 @@ echo "Generating paths for training and validation images..."
 echo ""
 python $ROAD_REPO_PATH/utils/generate_paths.py -it data/bdd100k/images/100k/train/ -iv data/bdd100k/images/100k/val/ -o $DARKNET_REPO_PATH/data/bdd100k/ && echo "Generated paths for training and validation images successfully!"
 
-# Copy pre-defined YOLOv4 network configuration file to cfg folder
-echo "Copying pre-defined YOLOv4 network configuration file to cfg folder..."
-echo ""
-cp -vi $ROAD_REPO_PATH/config/* $DARKNET_REPO_PATH/cfg/ && echo "Pre-defined YOLOv4 config copied successfully!"
-
 # Generate data file containing relative paths to the training, validation and backup folders for YOLOv4
 echo "Generating data file containing relative paths to the training, validation and backup folders for YOLOv4..."
 echo ""
 python $ROAD_REPO_PATH/utils/generate_data_file.py -c 10 -t data/bdd100k/bdd100k_train.txt -v data/bdd100k/bdd100k_val.txt -n data/bdd100k/bdd100k.names -b backup/ -o $DARKNET_REPO_PATH/data/bdd100k/
+
+# Copy pre-defined YOLOv4 network configuration file to cfg folder
+echo "Copying pre-defined YOLOv4 network configuration file to cfg folder..."
+echo ""
+cp -vi $ROAD_REPO_PATH/config/* $DARKNET_REPO_PATH/cfg/ && echo "Pre-defined YOLOv4 config copied successfully!"
 
 # Train YOLOV4 on Berkley DeepDrive dataset
 echo "Training YOLOv4 on Berkley DeepDrive dataset..."

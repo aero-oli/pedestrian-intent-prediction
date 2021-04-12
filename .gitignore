@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # Dataset Folder
-data/*
-!data/README.md
+data/datasets/*
+!data/datasets/README.md

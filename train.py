@@ -73,8 +73,6 @@
 #     main(config)
 
 
-import sys
-
 def Ep_Forecasting():
     from torch_geometric_temporal.dataset import ChickenpoxDatasetLoader
     from torch_geometric_temporal.signal import temporal_signal_split
@@ -181,7 +179,7 @@ def Web_Traf_Pred():
     print("MSE: {:.4f}".format(cost))
 
 if __name__ == '__main__':
-    sys.stdout.write("Start!")
+    print('Start!')
     Ep_Forecasting()
     Web_Traf_Pred()
-    sys.stdout.write("End!")
+    print('End!')

@@ -59,3 +59,71 @@ class BaseDataLoader(DataLoader):
             return None
         else:
             return DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
+
+
+# Implementation of the class BaseDataLoader
+
+import numpy as np
+from torch.utils.data import DataLoader
+from torch.utils.data.dataloader import default_collate
+from torch.utils.data.sampler import SubsetRandomSampler
+
+class BaseDataLoader(DataLoader):
+    """
+    Base class implementation for all data loaders. 
+    The class is inherited from nn.Module
+    """
+    def __init__(self, dataset, batchSize, shuffle, validationSplit, numberOfWorkers, collateFunction=default_collate):
+        """
+        Method to initialize an object of type BaseDataLoader
+
+        Parameters
+        ----------
+        self            : Instance of the class
+        dataset         :
+        batchSize       :
+        suffle          :
+        validationSplit :
+        numberOfWorkers :
+        collateFunction :
+
+        Returns
+        -------
+        self  : Initialized object of class BaseLoader
+        """
+        self.validationSplit = validationSplit
+        self.shuffle = shuffle
+
+        self.batchId = 0
+        self.numberOfSamples = len(dataset)
+
+        self.sampler, self.validationSampler = self.split_sampler(self.validationSplit)
+
+        self.initialKeywordArguments = {
+                                            'dataset': dataset,
+                                            'batch_size': batchSize,
+                                            'shuffle': self.shuffle,
+                                            'collate_fn': collateFunction,
+                                            'num_workers': numberOfWorkers
+                                        }        
+
+        super().__init__(sampler=self.sampler, **self.initialKeywordArguments)
+
+    def _split_sampler(self, split):
+        """
+        """
+        
+        if split == 0.0:
+            return None, None
+        
+        idFull = np.arrange(self.numberOfSamples)
+
+        np.random.seed(0)
+        np.random.shuffle(idFull)
+
+        
+
+    def split_validaion(self):
+        """
+        """
+        pass

@@ -12,14 +12,17 @@ class BaseModel(nn.Module):
     def __str__(self):
         """
         Method to get the string representation of the object.
+        The method filters out parameters that have the attribute requires_grad set to TRUE and calculates the sum of all total number of parameters.
 
         Parameters
         ----------
-        self    : Instance of the class
+        self    : BaseModel
+                  Instance of the class
 
         Returns
         -------
-        string  : String representation of the class
+        string  : str
+                  String representation of the class
 
         """
         modelParameters = filter(lambda p: p.requires_grad, self.parameters())
@@ -35,8 +38,11 @@ class BaseModel(nn.Module):
 
         Parameters
         ----------
-        self    : Instance of the class
-        *inputs : Variable number of non-keyword arguments
+        self    : BaseModel
+                  Instance of the class
+
+        *inputs : Multiple
+                  Variable number of non-keyword arguments
 
         Returns
         -------

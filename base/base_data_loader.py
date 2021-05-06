@@ -29,7 +29,7 @@ class BaseDataLoader(DataLoader):
         numberOfWorkers : int
                           Number of subprocesses used for data loading
         collateFunction : callable
-                          Function to merge a list of samples to form a mini-bacth of Tensor(s)
+                          Function to merge a list of samples to form a mini-bacth of Tensor(s). The default value is default_collate()
 
         Returns
         -------

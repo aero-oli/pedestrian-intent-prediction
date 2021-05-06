@@ -1,22 +1,35 @@
+# Implementation to setup logger
+
 import logging
 import logging.config
 from pathlib import Path
 from utils import read_json
 
+def setup_logging(saveDirectory, loggerConfig="logger/logger_config.json", defaultLevel=logging.INFO):
+    """
+    Function to setup loggining.
 
-def setup_logging(save_dir, log_config='logger/logger_config.json', default_level=logging.INFO):
+    Parameters
+    ----------
+    saveDirectory   : str
+                      Name of the directory
+    loggerConfig    : str
+                      Path to the logger config file
+    defaultLevel    : Logger
+                      Logs a message with level INFO on the root logger
+
+    Returns
+    -------
+    None
     """
-    Setup logging configuration
-    """
-    log_config = Path(log_config)
-    if log_config.is_file():
-        config = read_json(log_config)
-        # modify logging paths based on run config
+    loggerConfig = Path(loggerConfig)
+    if loggerConfig.is_file():
+        config = read_json(loggerConfig)
         for _, handler in config['handlers'].items():
             if 'filename' in handler:
-                handler['filename'] = str(save_dir / handler['filename'])
+                handler['filename'] = str(saveDirectory / handler['filename'])
 
         logging.config.dictConfig(config)
     else:
-        print("Warning: logging configuration file is not found in {}.".format(log_config))
-        logging.basicConfig(level=default_level)
+        print("[WARNING] Logger configuration is not found in the path {}".format(loggerConfig))
+        logging.basicConfig(level=defaultLevel)

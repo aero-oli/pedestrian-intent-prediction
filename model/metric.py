@@ -36,7 +36,8 @@ def top_k_accuracy(output, target, k=3):
                   Output of the neural network model
     target      : multiple
                   Ground truth value
-    k           : 
+    k           : int
+                  Number of probablities required for the accuracy to be considered
 
     Returns
     -------

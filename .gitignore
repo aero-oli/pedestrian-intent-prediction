@@ -131,3 +131,6 @@ dmypy.json
 # Dataset Folder
 data/datasets/*
 !data/datasets/README.md
+
+# idea folder
+.idea

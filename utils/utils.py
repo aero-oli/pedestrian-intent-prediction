@@ -49,7 +49,7 @@ class MetricTracker:
         for columns in self.data.columns:
             self.data[columns].values[:] = 0
 
-    def update(self, key, value, n=1):
+    def update(self, key, value, numberOfMetrics=1):
         """
         Method to update the tracked metrics.
 

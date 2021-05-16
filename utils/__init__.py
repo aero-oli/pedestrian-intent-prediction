@@ -1,3 +1,3 @@
 # Import complete functionality from package
 
-from .util import *
+from .utils import *

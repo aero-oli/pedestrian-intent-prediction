@@ -1,6 +1,7 @@
 # Implementation of dataset class for JAAD
 import torch
 import random
+import numpy as np
 from torch.utils.data import Dataset
 random.seed(0)
 

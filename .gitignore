@@ -129,8 +129,13 @@ dmypy.json
 .pyre/
 
 # Dataset Folder
-data/datasets/*
+data/*
 !data/datasets/README.md
+!data/figures
+!data/parameters
+
+# Saved Folder
+saved
 
 # idea folder
 .idea

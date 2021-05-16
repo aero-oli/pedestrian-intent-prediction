@@ -71,7 +71,7 @@ class MetricTracker:
         if self.writer is not None:
             self.writer.add_scalar(key, value)
         self.data.total[key] += value * numberOfMetrics
-        self.data.count[key] = numberOfMetrics
+        self.data.counts[key] = numberOfMetrics
         self.data.average[key] = self.data.total[key] / self.data.counts[key]
     
     def average(self, key):

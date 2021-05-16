@@ -50,16 +50,14 @@ def main(configuration):
     optimizer = configuration.initialize_object("optimizer", torch.optim, trainiableParameters)
     learningRateScheduler = configuration.initialize_object("lr_scheduler", torch.optim.lr_scheduler, optimizer)
 
-    """
     trainer = Trainer(model, criterion, metrics, optimizer,
-                      config=configuration,
+                      configuration=configuration,
                       device=device,
-                      data_loader=dataLoader,
-                      valid_data_loader=validationDataLoader,
-                      lr_scheduler=learningRateScheduler)
+                      dataLoader=dataLoader,
+                      validationDataLoader=validationDataLoader,
+                      learningRateScheduler=learningRateScheduler)
 
     trainer.train()
-    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

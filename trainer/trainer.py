@@ -1,110 +1,106 @@
-import numpy as np
-import torch
-from torchvision.utils import make_grid
-from base import BaseTrainer
-from utils import infinte_loop, MetricTracker
+# Implementation of Trainer
 
+import torch
+import numpy as np
+from base import BaseTrainer
+from torchvision.utils import make_grid
+from utils import infinte_loop, MetricTracker
 
 class Trainer(BaseTrainer):
     """
-    Trainer class
     """
-    def __init__(self, model, criterion, metric_ftns, optimizer, config, device,
-                 data_loader, valid_data_loader=None, lr_scheduler=None, len_epoch=None):
-        super().__init__(model, criterion, metric_ftns, optimizer, config)
-        self.config = config
+    def __init__(self, model, criterion, metricFunction, optimizer, configuration, device,
+                 dataLoader, validationDataLoader=None, learningRateScheduler=None, epochLength=None):
+        """
+        """
+        super().__init__(model, criterion, metricFunction, optimizer, configuration)
+        self.configuration = configuration
         self.device = device
-        self.data_loader = data_loader
-        if len_epoch is None:
-            # epoch-based training
-            self.len_epoch = len(self.data_loader)
+        self.dataLoader = dataLoader
+        if epochLength is None:
+            self.epochLength = len(self.dataLoader)
         else:
-            # iteration-based training
-            self.data_loader = inf_loop(data_loader)
-            self.len_epoch = len_epoch
-        self.valid_data_loader = valid_data_loader
-        self.do_validation = self.valid_data_loader is not None
-        self.lr_scheduler = lr_scheduler
-        self.log_step = int(np.sqrt(data_loader.batch_size))
+            self.dataLoader = infinte_loop(dataLoader)
+            self.epochLength = epochLength
+        self.validationDataLoader = validationDataLoader
+        self.performValidation = (self.validationDataLoader is not None)
+        self.learningRateScheduler = learningRateScheduler
+        self.loggingStep = int(np.sqrt(dataLoader.batch_size))
 
-        self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
-        self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+        self.trainingMetrics = MetricTracker("loss", *[m.__name__ for m in self.metricFunction], writer=self.writer)
+        self.validationMetrics = MetricTracker("loss", *[m.__name__ for m in self.metricFunction], writer=self.writer)
 
     def _train_epoch(self, epoch):
         """
-        Training logic for an epoch
-
-        :param epoch: Integer, current training epoch.
-        :return: A log that contains average loss and metric in this epoch.
         """
         self.model.train()
-        self.train_metrics.reset()
-        for batch_idx, (data, target) in enumerate(self.data_loader):
+        self.trainingMetrics.reset()
+        for batchId, (data, target) in enumerate(self.dataLoader):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
             output = self.model(data)
-            loss = self.criterion(output, target)
+            loss = self.criteria(output, target)
             loss.backward()
             self.optimizer.step()
 
-            self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
-            self.train_metrics.update('loss', loss.item())
-            for met in self.metric_ftns:
-                self.train_metrics.update(met.__name__, met(output, target))
+            self.writer.set_step((epoch - 1)* self.epochLength + batchId)
+            self.trainingMetrics.update("loss", loss.item())
+            for individualMetric in self.metricFunction:
+                self.trainingMetrics.update(individualMetric.__name__, individualMetric(output, target))
 
-            if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
-                    epoch,
-                    self._progress(batch_idx),
-                    loss.item()))
-                self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+            if batchId % self.loggingStep == 0:
+                self.logger.debug("Training Epoch: {} {} Loss: {}".format(epoch, self._progress(batchId), loss.item()))
+                self.writer.add_image("input", make_grid(data.cpu(), nrow=8, normalize=True))
 
-            if batch_idx == self.len_epoch:
+            if batchId == self.epochLength:
                 break
-        log = self.train_metrics.result()
+            
+        log = self.trainingMetrics.result()
 
-        if self.do_validation:
-            val_log = self._valid_epoch(epoch)
-            log.update(**{'val_'+k : v for k, v in val_log.items()})
+        if self.performValidation:
+            validationLog = self._validate_epoch(epoch)
+            log.update(**{"val_"+key: value for key,value in validationLog.items()})
 
-        if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+        if self.learningRateScheduler is not None:
+            self.learningRateScheduler.step()
+
         return log
 
-    def _valid_epoch(self, epoch):
+    def _validate_epoch(self, epoch):
         """
-        Validate after training an epoch
-
-        :param epoch: Integer, current training epoch.
-        :return: A log that contains information about validation
         """
         self.model.eval()
-        self.valid_metrics.reset()
+        self.validationMetrics.reset()
+
         with torch.no_grad():
-            for batch_idx, (data, target) in enumerate(self.valid_data_loader):
+            for batchId, (data, target) in enumerate(self.validationDataLoader):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
-                loss = self.criterion(output, target)
+                loss = self.criteria(output, target)
 
-                self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
-                self.valid_metrics.update('loss', loss.item())
-                for met in self.metric_ftns:
-                    self.valid_metrics.update(met.__name__, met(output, target))
-                self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+                self.writer.set_step((epoch - 1) * len(self.validationDataLoader) + batchId, "valid")
+                self.validationMetrics.update("loss", loss.item())
+                for individualMetric in self.metricFunction:
+                    self.validationMetrics.update(individualMetric.__name__, individualMetric(output, target))
+                self.writer.add_image("input", make_grid(data.cpu(), nrow=8, normalize=True))
 
-        # add histogram of model parameters to the tensorboard
-        for name, p in self.model.named_parameters():
-            self.writer.add_histogram(name, p, bins='auto')
-        return self.valid_metrics.result()
+        for name, parameter in self.model.named_parameters():
+            self.writer.add_histogram(name, parameter, bins="auto")
 
-    def _progress(self, batch_idx):
-        base = '[{}/{} ({:.0f}%)]'
-        if hasattr(self.data_loader, 'n_samples'):
-            current = batch_idx * self.data_loader.batch_size
-            total = self.data_loader.n_samples
+        return self.validationMetrics.result()
+
+    def _progress(self, batchId):
+        """
+        """
+        base = "[{}/{} ({:.0f}%)]"
+
+        if hasattr(self.dataLoader, "numberOfSamples"):
+            current = batchId * self.dataLoader.batch_size
+            total = self.dataLoader.numberOfSamples
         else:
-            current = batch_idx
-            total = self.len_epoch
-        return base.format(current, total, 100.0 * current / total)
+            current = batchId
+            total = self.epochLength
+
+        return base.format(current, total, 100.0 * current/total)

@@ -3,7 +3,7 @@
 import importlib
 from datetime import datetime
 
-class TensorBoardWriter():
+class TensorBoardWriter:
     """
     Class implementation for Tensor Board Writer.
     """
@@ -38,12 +38,12 @@ class TensorBoardWriter():
                     self.writer = importlib.import_module(module).SummaryWriter(logDirectory)
                     importSuccessful = True
                     break
-                except ImportError():
+                except ImportError:
                     importSuccessful = False
                 self.selectedModule = module
 
             if not importSuccessful:
-                message = "[WARNING] Visualization (i.e. Tensorboard) is configured to use, but not installed on this machine" \
+                message = "[WARNING] Visualization (i.e. Tensorboard) is configured to use, but not installed on this machine. " \
                     "Please install TensorboardX with 'pip install tensorboardx' and upgrade PyTorch to version >= 1.1 to use" \
                     "'torch.utils.tensorboard' or turn off the option in 'config.json' file." 
                 logger.warning(message)
@@ -79,7 +79,7 @@ class TensorBoardWriter():
         if name in self.tensorboardWriterFunctions:
             addData = getattr(self.writer, name, None)
 
-            def wrapper(tag, data, *args, **kwargds):
+            def wrapper(tag, data, *args, **kwargs):
                 if addData is not None:
                     if name not in self.tagModeExceptions:
                         tag = '{}/{}'.format(tag, self.mode)

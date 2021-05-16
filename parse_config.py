@@ -107,11 +107,11 @@ class ConfigParser:
         return self._configuration
 
     @property
-    def save_dir(self):
+    def saveDirectory(self):
         return self._saveDirectory
 
     @property
-    def log_directory(self):
+    def logDirectory(self):
         return self._logDirectory
 
 def _update_config(configuration, modification):

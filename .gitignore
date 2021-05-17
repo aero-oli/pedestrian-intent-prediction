@@ -131,7 +131,6 @@ dmypy.json
 # Dataset Folder
 data/*
 !data/datasets/README.md
-!data/datasets/predetermined
 !data/figures
 !data/parameters
 

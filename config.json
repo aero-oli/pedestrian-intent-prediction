@@ -11,11 +11,11 @@
         "type": "MnistDataLoader",
         "args":
         {
-            "data_dir": "data/",
-            "batch_size": 128,
+            "dataDirectory": "data/",
+            "batchSize": 128,
             "shuffle": true,
-            "validation_split": 0.1,
-            "num_workers": 2
+            "validationSplit": 0.1,
+            "numberOfWorkers": 2
         }
     },
     "optimizer": 
@@ -28,10 +28,10 @@
             "amsgrad": true
         }
     },
-    "loss": "nll_loss",
+    "loss": "negative_likelihood_loss",
     "metrics": 
     [
-        "accuracy", "top_k_acc"
+        "accuracy", "top_k_accuracy"
     ],
     "lr_scheduler": 
     {

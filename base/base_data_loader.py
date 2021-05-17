@@ -42,7 +42,7 @@ class BaseDataLoader(DataLoader):
         self.batchId = 0
         self.numberOfSamples = len(dataset)
 
-        self.sampler, self.validationSampler = self.split_sampler(self.validationSplit)
+        self.sampler, self.validationSampler = self._split_sampler(self.validationSplit)
 
         self.initialKeywordArguments = {
                                             'dataset': dataset,
@@ -76,7 +76,7 @@ class BaseDataLoader(DataLoader):
         if split == 0.0:
             return None, None
         
-        idFull = np.arrange(self.numberOfSamples)
+        idFull = np.arange(self.numberOfSamples)
 
         np.random.seed(0)
         np.random.shuffle(idFull)
@@ -89,7 +89,7 @@ class BaseDataLoader(DataLoader):
             validationLength = int(split * self.numberOfSamples)
 
         validationIds = idFull[0:validationLength]
-        trainingIds = np.delete(idFull, np.arrange(0, validationLength))
+        trainingIds = np.delete(idFull, np.arange(0, validationLength))
 
         trainingSampler = SubsetRandomSampler(trainingIds)
         validationSampler = SubsetRandomSampler(validationIds)
@@ -100,7 +100,7 @@ class BaseDataLoader(DataLoader):
 
         return trainingSampler, validationSampler
         
-    def split_validaion(self):
+    def split_validation(self):
         """
         Method to split validation data.
 

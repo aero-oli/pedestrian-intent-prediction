@@ -37,5 +37,5 @@ class MnistDataLoader(BaseDataLoader):
                                                         transforms.Normalize((0.1307,), (0.3081,))
                                                     ])
         self.dataDirectory = dataDirectory
-        self.dataset = dataset.MNIST(self.dataDirectory, train=training, download=True, transforms=requiredTransformations)
+        self.dataset = datasets.MNIST(self.dataDirectory, train=training, download=True, transform=requiredTransformations)
         super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)

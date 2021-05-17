@@ -24,12 +24,12 @@ class MnistModel(BaseModel):
         self    : BaseDataLoader
                   Initialized object of class MnistModel
         """
-        super.__init__()
+        super().__init__()
         self.conv1 = neuralNetwork.Conv2d(1, 10, kernel_size=5)
         self.conv2 = neuralNetwork.Conv2d(10, 20, kernel_size=5)
         self.conv2Drop = neuralNetwork.Dropout2d()
-        self.fc1 = nn.Linear(320, 50)
-        self.fc2 = nn.Linear(50, numberOfClasses)
+        self.fc1 = neuralNetwork.Linear(320, 50)
+        self.fc2 = neuralNetwork.Linear(50, numberOfClasses)
 
     def forward(self, x):
         """

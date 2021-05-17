@@ -22,7 +22,7 @@ def accuracy(output, target):
         predictedValue = torch.argmax(output, dim=1)
         assert predictedValue.shape[0] == len(target)
         correct = 0.0
-        correct += torch.sum(pred == target).item()
+        correct += torch.sum(predictedValue == target).item()
 
     return (correct/len(target))
 
@@ -50,6 +50,6 @@ def top_k_accuracy(output, target, k=3):
         assert predictedValue.shape[0] == len(target)
         correct = 0
         for i in range(k):
-            correct += torch.sum(pred[:,i] == target).item()
+            correct += torch.sum(predictedValue[:,i] == target).item()
 
     return (correct/len(target))

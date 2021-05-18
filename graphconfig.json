@@ -1,24 +1,26 @@
 {
-    "name": "Graph_Net",
-    "n_gpu": 1,
-    "arch":
+    "name": "PedestrianIntentPrediction",
+    "numberOfGpus": 1,
+    "architecture":
     {
-        "type": "GraphModel",
+        "type": "STGCN",
         "args": {}
     },
-    "data_loader":
+    "dataLoader":
     {
-        "type": "GraphDataLoader",
+        "type": "JaadDataLoader",
         "args":
         {
-            "datasetDir": "C:\\Users\\moose\\anaconda3\\envs\\master-thesis",
-            "bufferFrames": 0,
-            "batchSize": 128,
-            "shuffle": true,
-            "trainingSplit": 0.7,
-            "numberOfWorkers": 2,
-            "isTrain": true,
-            "modulefocus": true
+            "annotations": "data/datasets/jaad_database.pkl", 
+            "imageDirectoryFormat": "data/", 
+            "batchSize": 1,
+            "sequenceLength": 30,
+            "prediction": false,
+            "predictionLength": 0,
+            "shuffle": true, 
+            "validationSplit": 0.3, 
+            "numberOfWorkers": 1, 
+            "training": true
         }
     },
     "optimizer":

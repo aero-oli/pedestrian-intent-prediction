@@ -133,6 +133,8 @@ data/*
 !data/datasets/README.md
 !data/figures
 !data/parameters
+!data/README.md
+!data/predetermined
 
 # Saved Folder
 saved

@@ -129,13 +129,11 @@ dmypy.json
 .pyre/
 
 # Dataset Folder
-data/*
+data/datasets/*
 !data/datasets/README.md
 !data/datasets/custom_dataset.py
 !data/datasets/jaad_database.pkl
-!data/figures
-!data/parameters
-!data/README.md
+
 # Saved Folder
 saved
 

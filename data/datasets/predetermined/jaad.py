@@ -10,13 +10,22 @@ class JAADDataset(Dataset):
     Class implementation for JAAD Dataset. 
     The class is inherited from nn.utils.data.Dataset
     """
-    def __init__(self, split, isTrain, sequenceLength, imagePathFormat):
+    def __init__(self, split, isTrain, sequenceLength, datasetPath):
         """
+        Split               : float
+                                percentage of training/testing data split. The value is the amount of training data
+        isTrain             : bool
+                                If the dataset should return training data(True) or testing data(False)
+        sequenceLength      : float
+                                Amount of buffer-frames past pedestrian appearance
+        datasetPath         : str
+                                percentage of training
         """
         self.split = split
         self.isTrain = isTrain
         self.sequenceLength = sequenceLength
-        self.imagePathFormat = imagePathFormat
+        self.imagePathFormat = datasetPath + r"\{}\{}.jpg"
+        print(self.imagePathFormat)
 
     def __len__(self):
         """

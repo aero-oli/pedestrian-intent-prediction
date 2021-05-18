@@ -2,6 +2,7 @@
 
 from base import BaseDataLoader
 from torchvision import datasets, transforms
+from data.datasets.predetermined import jaad
 
 class MnistDataLoader(BaseDataLoader):
     """
@@ -46,7 +47,7 @@ class GraphDataLoader(BaseDataLoader):
     Class implementation for GraphDataLoader.
     The class is inherited from the class BaseDataLoader
     """
-    def __init__(self, dataDirectory, batchSize, shuffle=True, validationSplit=0.0, numberOfWorkers=1, training=True, modulefocus=True):
+    def __init__(self, datasetDir, bufferFrames=0, batchSize=1, shuffle=True, trainingSplit=0.9, numberOfWorkers=1, isTrain=True, modulefocus=True):
         """
         Method to initialize an object of type GraphDataLoader
 
@@ -56,14 +57,18 @@ class GraphDataLoader(BaseDataLoader):
                           Instance of the class
         dataDirectory   : str
                           Directory where the data must be loaded
+        bufferFrames    : int
+                          Number of frames
         batchSize       : int
-                          Number of samples per batch to load
+                          Number of pedestrains sent as a batch
         suffle          : bool
                           Set to True to have data resuffled at very epoch
-        validationSplit : int/float
-                          Number of samples/Percentage of dataset set as validation
+        trainingSplit   : int/float
+                          Number of samples/Percentage of dataset set as training vs testing
         numberOfWorkers : int
                           Number of subprocesses used for data loading
+        isTrain : bool
+                          If the module should train(True) or test(False)
         modulefocus : bool
                           If the training/testing is only focused on the graph module(True) or end-to-end(False)
 
@@ -76,12 +81,14 @@ class GraphDataLoader(BaseDataLoader):
                                                         transforms.ToTensor(),
                                                         transforms.Normalize((0.1307,), (0.3081,))
                                                     ])
-        self.dataDirectory = dataDirectory
+        self.datasetDir = datasetDir
 
         if modulefocus:
-            self.dataset = datasets.jaad(self.dataDirectory, train=training, download=True, transforms=requiredTransformations)
-            self.returnValuelabels = {}
-            for i, key in self.dataset.keys():
+
+            self.dataset, image_Paths = jaad.JAADDataset(split=trainingSplit, isTrain=isTrain, sequenceLength=bufferFrames, datasetPath=self.datasetDir) #split, isTrain, sequenceLength, imagePathFormat
+            self.labels = self.dataset.__getitem__(0)
+            print(self.dataset.__getitem__(0))
+            for i, key in self.dataset.__getitem__().keys():
                 self.returnValuelabels.update({i: key})
 
             self.Image_Paths = self.dataset.pop(self.returnValuelabels.popitem())
@@ -93,9 +100,3 @@ class GraphDataLoader(BaseDataLoader):
 
         # if modulefocus:
 
-
-if __name__ == '__main__':
-    print("Start!!")
-    print(data.datasets)
-    print(datasets.jaad.JAADDataset)
-    print(GraphDataLoader("Test", 2**2))

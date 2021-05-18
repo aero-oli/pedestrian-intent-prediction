@@ -1,24 +1,27 @@
 {
-    "name": "Mnist_LeNet",
+    "name": "Graph_Net",
     "n_gpu": 1,
-    "arch": 
+    "arch":
     {
-        "type": "MnistModel",
+        "type": "GraphModel",
         "args": {}
     },
-    "data_loader": 
+    "data_loader":
     {
-        "type": "MnistDataLoader",
+        "type": "GraphDataLoader",
         "args":
         {
-            "dataDirectory": "data/",
+            "datasetDir": "C:\\Users\\moose\\anaconda3\\envs\\master-thesis",
+            "bufferFrames": 0,
             "batchSize": 128,
             "shuffle": true,
-            "validationSplit": 0.1,
-            "numberOfWorkers": 2
+            "trainingSplit": 0.7,
+            "numberOfWorkers": 2,
+            "isTrain": true,
+            "modulefocus": true
         }
     },
-    "optimizer": 
+    "optimizer":
     {
         "type": "Adam",
         "args":
@@ -29,22 +32,22 @@
         }
     },
     "loss": "negative_likelihood_loss",
-    "metrics": 
+    "metrics":
     [
         "accuracy", "top_k_accuracy"
     ],
-    "lr_scheduler": 
+    "lr_scheduler":
     {
         "type": "StepLR",
-        "args": 
+        "args":
         {
             "step_size": 50,
             "gamma": 0.1
         }
     },
-    "trainer": 
+    "trainer":
     {
-        "epochs": 100,
+        "epochs": 1,
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,

@@ -22,10 +22,13 @@ np.random.seed(SEED)
 def main(configuration):
     """
     """
+    """
     logger = configuration.get_logger("train")
 
     # Setup Data loader Instances
-    dataLoader = configuration.initialize_object("data_loader", dataModule)
+    """
+    dataLoader = configuration.initialize_object("dataLoader", dataModule)
+    """
     validationDataLoader = dataLoader.split_validation()
 
     # Build Model Architecture and print to console
@@ -58,25 +61,13 @@ def main(configuration):
                       learningRateScheduler=learningRateScheduler)
 
     trainer.train()
+    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
     args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
     args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
     args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: All)")
-
-    """
-    # This part of the code is for modifying configuration from the code
-    # Currently this is not required for our project
-
-    CustomArgs = collections.namedtuple("CustomArgs", "flags type target")
-    options =   [
-                    CustomArgs(["--lr", "--learning_rate"], type=float, target="optimizer;args;lr"),
-                    CustomArgs(["--bs", "--batch_size"], type=int, target="data_loader;args;batch_size")
-                ]
-
-    config = ConfigParser.from_args(args, options)
-    """
 
     configuration = ConfigParser.from_args(args)
     main(configuration)

@@ -1,6 +1,6 @@
 # Implementation of Data Loader
 
-from random import shuffle
+import pickle
 from base import BaseDataLoader
 from torchvision import datasets, transforms
 import data.datasets.custom_dataset as customDataset
@@ -103,22 +103,39 @@ class JaadDataLoader(BaseDataLoader):
         """
         self.annotations = annotations
 
-        print("annotations: {}".format(annotations))
-        print("imageDirectoryFormat: {}".format(imageDirectoryFormat))
-        print("batchSize: {}".format(batchSize))
-        print("sequenceLength: {}".format(sequenceLength))
-        print("prediction: {}".format(prediction))
-        print("predictionLength: {}".format(predictionLength))
-        print("shuffle: {}".format(shuffle))
-        print("validationSplit: {}".format(validationSplit))
-        print("numberOfWorkers: {}".format(numberOfWorkers))
-        print("training: {}".format(training))
+        # print("annotations: {}".format(annotations))
+        # print("imageDirectoryFormat: {}".format(imageDirectoryFormat))
+        # print("batchSize: {}".format(batchSize))
+        # print("sequenceLength: {}".format(sequenceLength))
+        # print("prediction: {}".format(prediction))
+        # print("predictionLength: {}".format(predictionLength))
+        # print("shuffle: {}".format(shuffle))
+        # print("validationSplit: {}".format(validationSplit))
+        # print("numberOfWorkers: {}".format(numberOfWorkers))
+        # print("training: {}".format(training))
 
         self.dataset = customDataset.JAAD(self.annotations, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
-        print("Getting Item from dataset: ")
-        print(self.dataset.__getitem__(0))
+
         
+
+
+
+        def get_keys(d, pre_key=""):
+            for key, value in d.items():
+                if type(value) is dict:
+                    print(r"{}\{}".format(pre_key, get_keys(value, r"{}\{}".format(pre_key, key))))
+                else:
+                    print(r"{}".format(pre_key))
+
+        print("Getting Item from dataset: ")
+        # labels
+        print(self.dataset.__len__())
+        d = self.dataset.__getitem__(10)
+        print("Start Video_converter!!")
+        dset = video_converter(d)
+        # print(dset.get('video_0001'))
+
         #super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)
 
     # annot_ped_format, is_train, split,

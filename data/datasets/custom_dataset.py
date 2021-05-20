@@ -10,7 +10,7 @@ class JAAD(Dataset):
     Class implementation for JAAD Dataset. 
     The class is inherited from nn.utils.data.Dataset
     """
-    def __init__(self, annotations, imageDirectoryFormat, train, sequenceLength, prediction, predictionLength):
+    def __init__(self, annotations, imageDirectoryFormat="", train=True, sequenceLength=0, prediction=True, predictionLength=0):
         """
         Method to initialize an object of type JAAD
 
@@ -84,7 +84,8 @@ class JAAD(Dataset):
         #print("Type video: {}".format(type(video)))
         #print("Video: {}".format(video))
         
-        video = list(self.annotations.values())[id]
+        # video = list(self.annotations.values())[id]
+        video = (self.annotations)
 
         return video
         

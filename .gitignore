@@ -133,6 +133,7 @@ data/datasets/*
 !data/datasets/README.md
 !data/datasets/custom_dataset.py
 !data/datasets/jaad_database.pkl
+!data/datasets/jaad_frame_by_frame_dataset.pkl
 
 # Saved Folder
 saved

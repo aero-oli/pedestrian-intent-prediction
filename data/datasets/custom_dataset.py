@@ -64,7 +64,7 @@ class JAAD(Dataset):
         """
         return len(self.annotations)
 
-    def __getitem__(self, id):
+    def __getitem__(self):
         """
         Method to allow instances to use the indexer opterators.
 
@@ -80,14 +80,8 @@ class JAAD(Dataset):
         length      : int
                       Length attribute of the object
         """
-        #print("id: {}".format(id))
-        #print("Type video: {}".format(type(video)))
-        #print("Video: {}".format(video))
-        
-        # video = list(self.annotations.values())[id]
-        video = (self.annotations)
 
-        return video
+        return self.annotations
         
 
     """

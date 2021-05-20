@@ -117,26 +117,16 @@ class JaadDataLoader(BaseDataLoader):
         self.dataset = customDataset.JAAD(self.annotations, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
 
-        
-
-
-
-        def get_keys(d, pre_key=""):
-            for key, value in d.items():
-                if type(value) is dict:
-                    print(r"{}\{}".format(pre_key, get_keys(value, r"{}\{}".format(pre_key, key))))
-                else:
-                    print(r"{}".format(pre_key))
-
         print("Getting Item from dataset: ")
         # labels
         print(self.dataset.__len__())
-        d = self.dataset.__getitem__(10)
+        d = self.dataset.__getitem__()
         print("Start Video_converter!!")
-        dset = video_converter(d)
-        # print(dset.get('video_0001'))
+        print(len(d.keys()))
 
-        #super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)
+
+
+        # super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)
 
     # annot_ped_format, is_train, split,
     # seq_len, ped_crop_size, mask_size, collapse_cls,

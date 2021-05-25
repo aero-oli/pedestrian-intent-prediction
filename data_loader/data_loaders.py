@@ -1,8 +1,13 @@
 # Implementation of Data Loader
+import torch
 
+import utils
+from sklearn import preprocessing
 import pickle
+import numpy as np
 from base import BaseDataLoader
 from torchvision import datasets, transforms
+from torch_geometric.data import Data
 import data.datasets.custom_dataset as customDataset
 
 class MnistDataLoader(BaseDataLoader):
@@ -116,14 +121,100 @@ class JaadDataLoader(BaseDataLoader):
 
         self.dataset = customDataset.JAAD(self.annotations, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
-
         print("Getting Item from dataset: ")
-        # labels
-        print(self.dataset.__len__())
-        d = self.dataset.__getitem__()
-        print("Start Video_converter!!")
-        print(len(d.keys()))
 
+        # d = self.dataset.__getitem__()
+        d = self.dataset.__getitem__()
+
+
+        self.new_dataset = []
+        self.new_videos = []
+        self.new_frames = []
+
+        data = Data()
+        print(d.keys())
+        for video_id, video_value in d.items():
+            # video = d.get(list(d.keys())[0])
+            width = video_value['width']
+            height = video_value['height']
+            print(video_value['num_frames'])
+            for frame_id, frame_value in video_value['frames'].items():
+                node_position = np.empty(shape=4)
+                node_appearance = np.empty(shape=25)
+                node_attributes = np.empty(shape=12)
+                node_behavior = np.empty(shape=6)
+                node_ground_truth = np.empty(shape=3)
+                for object_id, object_value in frame_value.items():
+                    object_node_appearance = np.array([])
+                    object_node_attributes = np.array([])
+                    object_node_behavior = np.array([])
+
+
+
+                    print(object_value.keys())
+                    print("behavior keys: {}".format(object_value['behavior'].keys()))
+                    # print("attributes keys: {}".format(object_value['attributes'].keys()))
+                    # print("appearance keys: {}".format(object_value['appearance'].keys()))
+                    print("behavior: {}".format(object_value['behavior']))
+
+                    for object_behavior_id, object_behavior_value in object_value['behavior'].items():
+                        object_node_behavior = np.hstack([object_node_behavior, int(object_behavior_value)])
+                    for object_appearance_id, object_appearance_value in object_value['appearance'].items():
+                        object_node_appearance = np.hstack([object_node_appearance, int(object_appearance_value)])
+                    for node_attributes_id, node_attributes_value in object_value['attributes'].items():
+                        if not node_attributes_id == 'old_id':
+                            object_node_attributes = np.hstack([object_node_attributes, int(node_attributes_value)])
+
+                    node_behavior = np.vstack([node_behavior, object_node_behavior])
+                    node_attributes = np.vstack([node_attributes, object_node_attributes])
+                    node_appearance = np.vstack([node_appearance, object_node_appearance])
+                    node_position = np.vstack([node_position, object_value['bbox']])
+                    node_ground_truth = np.vstack([node_ground_truth, np.array(object_value['ground_truth'])])
+
+
+                # print(np.delete(node_behavior, 0, 0))
+                # print(np.delete(node_attributes, 0, 0))
+                # print(np.delete(node_appearance, 0, 0))
+                node_features = np.delete(np.hstack([node_behavior, node_attributes, node_appearance]), 0, 0)
+                data = Data(x=torch.as_tensor(node_features),
+                            y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
+                            pos=torch.as_tensor(np.delete(node_position, 0, 0)),
+                            width=width,
+                            height=height)
+                break
+            break
+        print(data)
+
+        # frame = frames.get(list(frames.keys())[0])
+
+        # print(frame.keys())
+        # # print(type(frame_tensor))
+        # data = torch.Tensor([])
+        # print(frames_tensor.keys)
+        # print(frames.keys())
+        # print(frame_tensor.num_nodes)
+
+        # for object_id, object_features in frame.items():
+        #     x_object = torch.Tensor([])
+        #     x_object = torch.cat((x, object_id), 1)
+        #     print(x_object, x_object.size())
+        #     # print(val.keys())
+        #     # print(val)
+        #     print(object_id, object_features)
+        #     frame_object = torch.Tensor
+        #     if type(object_features) is dict:
+        #         print("dict")
+        #         # For loop
+        #     elif object_id in labels:
+        #         print(True)
+
+
+
+
+        # nodes = Data.from_dict(frame)
+        #
+        # print(nodes.keys)
+        # print(nodes[nodes.keys[0]])
 
 
         # super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)

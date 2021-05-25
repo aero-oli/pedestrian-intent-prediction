@@ -3,6 +3,7 @@
 import json
 import torch
 import pandas as pd
+from torch_geometric.data import Data
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
@@ -226,6 +227,8 @@ def jaad_annotation_converter(dataset):
 
     :return (dict): jaad annotations in on a complete frame-by-frame order
     '''
+    prediction_length = [15, 30, 45]
+
     new_annotations = {}
     for video_name, video in dataset.items():
         video_dict = {}
@@ -240,22 +243,30 @@ def jaad_annotation_converter(dataset):
                 if frame_no in ped.get('frames') and 'behavior' in ped.keys() and 'cross' in ped.get('behavior',
                                                                                                      {}).keys():
                     frame_index = ped.get('frames').index(frame_no)
+                    frame_prediction_length = [frame_no + x if (frame_no + x) in ped.get('frames') else None for x in prediction_length]
                     for ped_anno, ped_anno_value in ped.items():
-                        if not (type(ped_anno_value) is dict or type(ped_anno_value) is list):
-                            ped_id_dict.update({ped_anno: ped_anno_value})
-                        elif type(ped_anno_value) is list:
-                            ped_id_dict.update({ped_anno: ped_anno_value[frame_index]})
-                        elif type(ped_anno_value) is dict:
-                            ped_id_sub_dict = {}
-                            for ped_anno_sub, ped_anno_sub_value in ped_anno_value.items():
-                                if type(ped_anno_sub_value) is list:
-                                    ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value[frame_index]})
-                                else:
-                                    ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value})
-                            ped_id_dict.update({ped_anno: ped_id_sub_dict})
+                        if ped_anno != "frames":
+                            if not (type(ped_anno_value) is dict or type(ped_anno_value) is list):
+                                ped_id_dict.update({ped_anno: ped_anno_value})
+                            elif type(ped_anno_value) is list:
+                                ped_id_dict.update({ped_anno: ped_anno_value[frame_index]})
+                            elif type(ped_anno_value) is dict:
+                                ped_id_sub_dict = {}
+                                for ped_anno_sub, ped_anno_sub_value in ped_anno_value.items():
+                                    if ped_anno_sub == 'cross':
+                                        frame_prediction_length = [ped_anno_sub_value[x] if not x is None and x < len(ped_anno_sub_value) else None for x in frame_prediction_length]
+                                    if type(ped_anno_sub_value) is list:
+                                        ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value[frame_index]})
+                                    else:
+                                        ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value})
+                                ped_id_dict.update({ped_anno: ped_id_sub_dict})
+                                ped_id_dict.update({'ground_truth': frame_prediction_length})
                     frame_dict.update({ped_id: ped_id_dict})
-
                 all_frames_dict.update({frame_no: frame_dict})
         video_dict.update({'frames': all_frames_dict})
         new_annotations.update({video_name: video_dict})
+
     return new_annotations
+
+
+

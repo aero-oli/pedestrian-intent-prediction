@@ -238,31 +238,35 @@ def jaad_annotation_converter(dataset):
         all_frames_dict = {}
         for frame_no in range(video.get('num_frames')):
             frame_dict = {}
-            for ped_id, ped in video.get('ped_annotations').items():
-                ped_id_dict = {}
-                if frame_no in ped.get('frames') and 'behavior' in ped.keys() and 'cross' in ped.get('behavior',
+            for pedestrian_id, pedestrian_value in video.get('ped_annotations').items():
+                pedestrian_id_dict = {}
+                if frame_no in pedestrian_value.get('frames') and 'behavior' in pedestrian_value.keys() and 'cross' in pedestrian_value.get('behavior',
                                                                                                      {}).keys():
-                    frame_index = ped.get('frames').index(frame_no)
-                    frame_prediction_length = [frame_no + x if (frame_no + x) in ped.get('frames') else None for x in prediction_length]
-                    for ped_anno, ped_anno_value in ped.items():
-                        if ped_anno != "frames":
-                            if not (type(ped_anno_value) is dict or type(ped_anno_value) is list):
-                                ped_id_dict.update({ped_anno: ped_anno_value})
-                            elif type(ped_anno_value) is list:
-                                ped_id_dict.update({ped_anno: ped_anno_value[frame_index]})
-                            elif type(ped_anno_value) is dict:
-                                ped_id_sub_dict = {}
-                                for ped_anno_sub, ped_anno_sub_value in ped_anno_value.items():
-                                    if ped_anno_sub == 'cross':
-                                        frame_prediction_length = [ped_anno_sub_value[x] if not x is None and x < len(ped_anno_sub_value) else None for x in frame_prediction_length]
-                                    if type(ped_anno_sub_value) is list:
-                                        ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value[frame_index]})
+                    frame_index = pedestrian_value.get('frames').index(frame_no)
+                    frame_prediction_length = [frame_no + x if (frame_no + x) in pedestrian_value.get('frames') else None for x in prediction_length]
+                    for pedestrian_annotation, pedestrian_annotation_value in pedestrian_value.items():
+                        if pedestrian_annotation != "frames":
+                            if not (type(pedestrian_annotation_value) is dict or type(pedestrian_annotation_value) is list):
+                                pedestrian_id_dict.update({pedestrian_annotation: pedestrian_annotation_value})
+                            elif type(pedestrian_annotation_value) is list:
+                                pedestrian_id_dict.update({pedestrian_annotation: pedestrian_annotation_value[frame_index]})
+                            elif type(pedestrian_annotation_value) is dict:
+                                pedestiran_id_sub_dict = {}
+                                for pedestrian_annotation_sub_id, pedestrian_annotation_sub_value in pedestrian_annotation_value.items():
+                                    if pedestrian_annotation_sub_id == 'cross':
+                                        frame_prediction_length = [pedestrian_annotation_sub_value[x] if not x is None and x < len(pedestrian_annotation_sub_value) else None for x in frame_prediction_length]
+                                    if type(pedestrian_annotation_sub_value) is list:
+                                        pedestiran_id_sub_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value[frame_index]})
                                     else:
-                                        ped_id_sub_dict.update({ped_anno_sub: ped_anno_sub_value})
-                                ped_id_dict.update({ped_anno: ped_id_sub_dict})
-                                ped_id_dict.update({'ground_truth': frame_prediction_length})
-                    frame_dict.update({ped_id: ped_id_dict})
+                                        pedestiran_id_sub_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value})
+                                pedestrian_id_dict.update({pedestrian_annotation: pedestiran_id_sub_dict})
+                                pedestrian_id_dict.update({'ground_truth': frame_prediction_length})
+                    frame_dict.update({pedestrian_id: pedestrian_id_dict})
                 all_frames_dict.update({frame_no: frame_dict})
+            # for vehicle_id, vehicle_value in video.get('vehicle_annotations').items():
+            #     print("vehicle_value: ",vehicle_value)
+            # for traffic_id, traffic_value in video.get('traffic_annotations').items():
+            #     print("traffic_value: ",traffic_value)
         video_dict.update({'frames': all_frames_dict})
         new_annotations.update({video_name: video_dict})
 

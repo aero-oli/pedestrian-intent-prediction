@@ -55,7 +55,7 @@ class JaadDataLoader(BaseDataLoader):
     Class implementation for JaadDataLoader.
     The class is inherited from the class BaseDataLoader
     """
-    def __init__(self, annotations, imageDirectoryFormat, batchSize, sequenceLength, prediction, predictionLength, shuffle=True, validationSplit=0.1, numberOfWorkers=1, training=True):
+    def __init__(self, annotation_path, imageDirectoryFormat, batchSize, sequenceLength, prediction, predictionLength, shuffle=True, validationSplit=0.1, numberOfWorkers=1, training=True):
         """
         Method to initialize an object of type JaadDataLoader
 
@@ -63,7 +63,7 @@ class JaadDataLoader(BaseDataLoader):
         ----------
         self                    : JaadDataLoader
                                   Instance of the class
-        annotations             : str
+        annotation_path             : str
                                   Path to the annotations file
         imageDirectoryFormat    : str
                                   Format of the directory containing images
@@ -106,56 +106,36 @@ class JaadDataLoader(BaseDataLoader):
 
         super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)
         """
-        self.annotations = annotations
-
-        # print("annotations: {}".format(annotations))
-        # print("imageDirectoryFormat: {}".format(imageDirectoryFormat))
-        # print("batchSize: {}".format(batchSize))
-        # print("sequenceLength: {}".format(sequenceLength))
-        # print("prediction: {}".format(prediction))
-        # print("predictionLength: {}".format(predictionLength))
-        # print("shuffle: {}".format(shuffle))
-        # print("validationSplit: {}".format(validationSplit))
-        # print("numberOfWorkers: {}".format(numberOfWorkers))
-        # print("training: {}".format(training))
-
-        self.dataset = customDataset.JAAD(self.annotations, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
+        self.dataset = customDataset.JAAD(annotation_path, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
         print("Getting Item from dataset: ")
 
-        # d = self.dataset.__getitem__()
         d = self.dataset.__getitem__()
+        # d = utils.jaad_annotation_converter(self.dataset.__getitem__())
 
+        self.graph_dataset = {}
 
-        self.new_dataset = []
-        self.new_videos = []
-        self.new_frames = []
-
-        data = Data()
-        print(d.keys())
         for video_id, video_value in d.items():
-            # video = d.get(list(d.keys())[0])
+            graph_video = {}
             width = video_value['width']
             height = video_value['height']
-            print(video_value['num_frames'])
             for frame_id, frame_value in video_value['frames'].items():
                 node_position = np.empty(shape=4)
                 node_appearance = np.empty(shape=25)
                 node_attributes = np.empty(shape=12)
                 node_behavior = np.empty(shape=6)
                 node_ground_truth = np.empty(shape=3)
+                edge_index = np.empty(shape=[2, 1])
                 for object_id, object_value in frame_value.items():
                     object_node_appearance = np.array([])
                     object_node_attributes = np.array([])
                     object_node_behavior = np.array([])
 
-
-
-                    print(object_value.keys())
-                    print("behavior keys: {}".format(object_value['behavior'].keys()))
+                    # print(object_value.keys())
+                    # print("behavior keys: {}".format(object_value['behavior'].keys()))
                     # print("attributes keys: {}".format(object_value['attributes'].keys()))
                     # print("appearance keys: {}".format(object_value['appearance'].keys()))
-                    print("behavior: {}".format(object_value['behavior']))
+                    # print("behavior: {}".format(object_value['behavior']))
 
                     for object_behavior_id, object_behavior_value in object_value['behavior'].items():
                         object_node_behavior = np.hstack([object_node_behavior, int(object_behavior_value)])
@@ -169,83 +149,23 @@ class JaadDataLoader(BaseDataLoader):
                     node_attributes = np.vstack([node_attributes, object_node_attributes])
                     node_appearance = np.vstack([node_appearance, object_node_appearance])
                     node_position = np.vstack([node_position, object_value['bbox']])
-                    node_ground_truth = np.vstack([node_ground_truth, np.array(object_value['ground_truth'])])
-
+                    node_ground_truth = np.vstack([node_ground_truth, np.array([x if not x is None else 2 for x in object_value['ground_truth']])])
 
                 # print(np.delete(node_behavior, 0, 0))
                 # print(np.delete(node_attributes, 0, 0))
                 # print(np.delete(node_appearance, 0, 0))
-                node_features = np.delete(np.hstack([node_behavior, node_attributes, node_appearance]), 0, 0)
+
+                node_features = np.delete(np.hstack([node_appearance, node_attributes, node_behavior]), 0, 0)
+                if node_features.shape[0] > 1:
+                    edge_index = np.hstack([edge_index, [[[j, i], [i, j]] for i in range(node_features.shape[0]) for j in range(i+1) if i != j][0]])
                 data = Data(x=torch.as_tensor(node_features),
+                            edge_index=torch.as_tensor(np.delete(edge_index, 0, 1), dtype=torch.long),
                             y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
                             pos=torch.as_tensor(np.delete(node_position, 0, 0)),
-                            width=width,
-                            height=height)
-                break
-            break
-        print(data)
-
-        # frame = frames.get(list(frames.keys())[0])
-
-        # print(frame.keys())
-        # # print(type(frame_tensor))
-        # data = torch.Tensor([])
-        # print(frames_tensor.keys)
-        # print(frames.keys())
-        # print(frame_tensor.num_nodes)
-
-        # for object_id, object_features in frame.items():
-        #     x_object = torch.Tensor([])
-        #     x_object = torch.cat((x, object_id), 1)
-        #     print(x_object, x_object.size())
-        #     # print(val.keys())
-        #     # print(val)
-        #     print(object_id, object_features)
-        #     frame_object = torch.Tensor
-        #     if type(object_features) is dict:
-        #         print("dict")
-        #         # For loop
-        #     elif object_id in labels:
-        #         print(True)
-
-
-
-
-        # nodes = Data.from_dict(frame)
-        #
-        # print(nodes.keys)
-        # print(nodes[nodes.keys[0]])
+                            width=torch.as_tensor(width),
+                            height=torch.as_tensor(height))
+                graph_video.update({frame_id: data})
+            self.graph_dataset.update({video_id: graph_video})
 
 
         # super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)
-
-    # annot_ped_format, is_train, split,
-    # seq_len, ped_crop_size, mask_size, collapse_cls,
-    # img_path_format, fsegm_format):
-
-    #self.split = opt.split
-    #annot_ped = opt.annot_ped_format.format(self.split)
-    #with open(annot_ped, 'rb') as handle: self.peds = pickle.load(handle)
-    #self.is_train = opt.is_train
-    #self.rand_test = opt.rand_test
-    #self.seq_len = opt.seq_len
-    #self.predict = opt.predict
-    #if self.predict: self.all_seq_len = self.seq_len + opt.pred_seq_len
-    #else:self.all_seq_len = self.seq_len
-    #self.predict_k = opt.predict_k
-    #if self.predict_k:self.all_seq_len += self.predict_k
-    #self.ped_crop_size = opt.ped_crop_size
-    #self.mask_size = opt.mask_size
-    #self.collapse_cls = opt.collapse_cls
-    #self.combine_method = opt.combine_method
-    #self.img_path_format = opt.img_path_format
-    #self.driver_act_format = opt.driver_act_format
-    #self.fsegm_format = opt.fsegm_format
-    #self.save_cache_format = opt.save_cache_format
-    #self.load_cache = opt.load_cache
-    #self.cache_format = opt.cache_format
-    #self.cache_obj_bbox_format = opt.cache_obj_bbox_format
-    #self.use_driver = opt.use_driver
-    #self.use_pose = opt.use_pose
-
-

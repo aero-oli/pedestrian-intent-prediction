@@ -11,7 +11,7 @@
         "type": "JaadDataLoader",
         "args":
         {
-            "annotations": "data/datasets/jaad_frame_by_frame_database.pkl",
+            "annotation_path": "data/datasets/jaad_frame_by_frame_database.pkl",
             "imageDirectoryFormat": "data/", 
             "batchSize": 1,
             "sequenceLength": 30,

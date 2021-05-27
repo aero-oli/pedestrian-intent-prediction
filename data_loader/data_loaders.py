@@ -108,8 +108,6 @@ class JaadDataLoader(BaseDataLoader):
         """
         self.dataset = customDataset.JAAD(annotation_path, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
-        print("Getting Item from dataset: ")
-
         d = self.dataset.__getitem__()
         # d = utils.jaad_annotation_converter(self.dataset.__getitem__())
 
@@ -127,45 +125,33 @@ class JaadDataLoader(BaseDataLoader):
                 node_ground_truth = np.empty(shape=3)
                 edge_index = np.empty(shape=[2, 1])
                 for object_id, object_value in frame_value.items():
-                    object_node_appearance = np.array([])
-                    object_node_attributes = np.array([])
-                    object_node_behavior = np.array([])
 
-                    # print(object_value.keys())
-                    # print("behavior keys: {}".format(object_value['behavior'].keys()))
-                    # print("attributes keys: {}".format(object_value['attributes'].keys()))
-                    # print("appearance keys: {}".format(object_value['appearance'].keys()))
-                    # print("behavior: {}".format(object_value['behavior']))
+                    node_behavior = np.vstack([node_behavior, np.array(
+                        [int(object_behavior_value) for object_behavior_id, object_behavior_value in
+                         object_value['behavior'].items()])])
+                    node_attributes = np.vstack([node_attributes, np.array(
+                        [int(node_attributes_value) for node_attributes_id, node_attributes_value in
+                         object_value['attributes'].items() if not node_attributes_id == 'old_id'])])
 
-                    for object_behavior_id, object_behavior_value in object_value['behavior'].items():
-                        object_node_behavior = np.hstack([object_node_behavior, int(object_behavior_value)])
-                    for object_appearance_id, object_appearance_value in object_value['appearance'].items():
-                        object_node_appearance = np.hstack([object_node_appearance, int(object_appearance_value)])
-                    for node_attributes_id, node_attributes_value in object_value['attributes'].items():
-                        if not node_attributes_id == 'old_id':
-                            object_node_attributes = np.hstack([object_node_attributes, int(node_attributes_value)])
+                    node_appearance = np.vstack([node_appearance, np.array(
+                        [int(object_appearance_value) for object_appearance_id, object_appearance_value in
+                         object_value['appearance'].items()])])
 
-                    node_behavior = np.vstack([node_behavior, object_node_behavior])
-                    node_attributes = np.vstack([node_attributes, object_node_attributes])
-                    node_appearance = np.vstack([node_appearance, object_node_appearance])
                     node_position = np.vstack([node_position, object_value['bbox']])
-                    node_ground_truth = np.vstack([node_ground_truth, np.array([x if not x is None else 2 for x in object_value['ground_truth']])])
 
-                # print(np.delete(node_behavior, 0, 0))
-                # print(np.delete(node_attributes, 0, 0))
-                # print(np.delete(node_appearance, 0, 0))
+                    node_ground_truth = np.vstack([node_ground_truth, np.array([x if not x is None else 2 for x in object_value['ground_truth']])])
 
                 node_features = np.delete(np.hstack([node_appearance, node_attributes, node_behavior]), 0, 0)
                 if node_features.shape[0] > 1:
                     edge_index = np.hstack([edge_index, [[[j, i], [i, j]] for i in range(node_features.shape[0]) for j in range(i+1) if i != j][0]])
-                data = Data(x=torch.as_tensor(node_features),
+
+                graph_video.update({frame_id: Data(x=torch.as_tensor(node_features),
                             edge_index=torch.as_tensor(np.delete(edge_index, 0, 1), dtype=torch.long),
                             y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
                             pos=torch.as_tensor(np.delete(node_position, 0, 0)),
                             width=torch.as_tensor(width),
-                            height=torch.as_tensor(height))
-                graph_video.update({frame_id: data})
+                            height=torch.as_tensor(height))})
             self.graph_dataset.update({video_id: graph_video})
 
-
+        super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)
         # super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)

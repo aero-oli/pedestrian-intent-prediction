@@ -37,16 +37,15 @@ class JAAD(Dataset):
                   Initialized object of class JAAD
         """
         self.annotations = annotations
-        self.imageDirectoryFormat = imageDirectoryFormat
-        self.training = train
-        self.sequenceLength = sequenceLength
-        self.prediction = prediction
-        self.predictionLength = predictionLength
+        # self.imageDirectoryFormat = imageDirectoryFormat
+        # self.training = train
+        # self.sequenceLength = sequenceLength
+        # self.prediction = prediction
+        # self.predictionLength = predictionLength
 
         with open(self.annotations, "rb") as annotationsFile:
             self.annotations = pickle.load(annotationsFile)
 
-        print("Type of self.annotations: {}".format(type(self.annotations)))
 
     def __len__(self):
         """

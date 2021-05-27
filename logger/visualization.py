@@ -9,7 +9,7 @@ class TensorBoardWriter:
     """
     def __init__(self, logDirectory, logger, enabled):
         """
-        Method to initialize an object of type TensorBoardWriter
+        Method to initialize an object of type TensorBoardWriter.
 
         Parameters
         ----------
@@ -27,9 +27,11 @@ class TensorBoardWriter:
         self    : TensorBoardWriter
                   Initialized object of class TensorBoardWriter
         """
+        # Initialize parameters like writer and selected module
         self.writer = None
         self.selectedModule = ""
 
+        # Import required modules if TensorBoardWriter is enabled
         if enabled:
             logDirectory = str(logDirectory)
             importSuccessful = False
@@ -48,14 +50,14 @@ class TensorBoardWriter:
                     "'torch.utils.tensorboard' or turn off the option in 'config.json' file." 
                 logger.warning(message)
 
+        # Initialize parameters like step, mode, tensorboardWriterFunctions, tagModeExceptions and timer
         self.step = 0
-        self.mode = ''
-
+        self.mode = ""
         self.tensorboardWriterFunctions =   { 
-                                                'add_scalar', 'add_scalars', 'add_image', 'add_images', 'add_audio', 
-                                                'add_text', 'add_histogram', 'add_pr_curve', 'add_embedding'
+                                                "add_scalar", "add_scalars", "add_image", "add_images", "add_audio", 
+                                                "add_text", "add_histogram", "add_pr_curve", "add_embedding"
                                             }        
-        self.tagModeExceptions = {'add_histogram', 'add_embedding'}
+        self.tagModeExceptions = {"add_histogram", "add_embedding"}
         self.timer = datetime.now()
 
     def __getattr__(self, name):
@@ -76,21 +78,21 @@ class TensorBoardWriter:
         function    : Callable
                       Function handle that adds data in case the visualization is configured to use, else blank
         """
+        # Evaluate if visualization is configured and return a function handle
         if name in self.tensorboardWriterFunctions:
-            addData = getattr(self.writer, name, None)
+            add_data = getattr(self.writer, name, None)
 
             def wrapper(tag, data, *args, **kwargs):
-                if addData is not None:
+                if add_data is not None:
                     if name not in self.tagModeExceptions:
                         tag = '{}/{}'.format(tag, self.mode)
-                    addData(tag, data, self.step, *args, **kwargs)
+                    add_data(tag, data, self.step, *args, **kwargs)
             return wrapper
         else:
             try:
                 attribute = object.__getattr__(name)
             except AttributeError:
-                raise AttributeError('Type object {} has no attribute {}'.format(self.selectedModule, name))
-            
+                raise AttributeError('Type object {} has no attribute {}'.format(self.selectedModule, name))        
             return attribute
 
 
@@ -111,11 +113,14 @@ class TensorBoardWriter:
         -------
         None
         """
+        # Initialize parameters like mode and step
         self.mode = mode
         self.step = step
+
+        # Set step for the TensorBoardWriter
         if step == 0:
             self.timer = datetime.now()
         else:
             duration = datetime.now() - self.timer
-            self.add_scalar('steps_per_second', 1/duration.total_seconds())
+            self.add_scalar("steps_per_second", 1/duration.total_seconds())
             self.timer = datetime.now()

@@ -8,12 +8,46 @@ from utils import infinte_loop, MetricTracker
 
 class Trainer(BaseTrainer):
     """
+    Class implementation for trainers. 
+    The class is inherited from the class BaseTrainer.
     """
     def __init__(self, model, criterion, metricFunction, optimizer, configuration, device,
                  dataLoader, validationDataLoader=None, learningRateScheduler=None, epochLength=None):
         """
+        Method to initialize an object of type Trainer.
+
+        Parameters
+        ----------
+        self                    : Trainer
+                                  Instance of the class
+        model                   : torch.nn.Module
+                                  Model to be trained
+        criterion               : callable
+                                  Criterion to be evaluated (This is usually the loss function to be minimized)
+        metricFunction          : callable
+                                  Metric functions to evaluate model performance
+        optimizer               : torch.optim
+                                  Optimizer to be used during training
+        device                  : torch.device
+                                  Device on which the training would be performed
+        dataLoader              : torch.utils.data.DataLoader
+                                  Dataset sampler to load training data for model training
+        validationDataLoader    : torch.utils.data.DataLoader
+                                  Dataset sampler to load validation data for model validation (Default value: None)
+        learningRateScheduler   : torch.optim.lr_scheduler
+                                  Method to adjust learning rate (Default value: None)
+        epochLength             : int
+                                  Total number of epochs for training (Default value: None)
+
+        Returns
+        -------
+        self    : Trainer
+                  Initialized object of class Trainer
         """
+        # Initialize BaseTrainer class
         super().__init__(model, criterion, metricFunction, optimizer, configuration)
+
+        # Save trainer configuration, device, dataLoaders, learningRateScheduler and loggingStep
         self.configuration = configuration
         self.device = device
         self.dataLoader = dataLoader
@@ -27,49 +61,84 @@ class Trainer(BaseTrainer):
         self.learningRateScheduler = learningRateScheduler
         self.loggingStep = int(np.sqrt(dataLoader.batch_size))
 
-        self.trainingMetrics = MetricTracker("loss", *[m.__name__ for m in self.metricFunction], writer=self.writer)
-        self.validationMetrics = MetricTracker("loss", *[m.__name__ for m in self.metricFunction], writer=self.writer)
+        # Set up training and validation metrics
+        self.trainingMetrics = MetricTracker("loss", *[individualMetricFunction.__name__ for individualMetricFunction in self.metricFunction], writer=self.writer)
+        self.validationMetrics = MetricTracker("loss", *[individualMetricFunction.__name__ for individualMetricFunction in self.metricFunction], writer=self.writer)
 
-    def _train_epoch(self, epoch):
+    def train_epoch(self, epoch):
         """
+        Method to train a single epoch.
+
+        Parameters
+        ----------
+        self    : Trainer
+                  Instance of the class
+        epoch   : int
+                  Current epoch number
+
+        Returns
+        -------
+        log     : dict
+                  Average of all the metrics in a dictionary
         """
+        # Set the model to training mode and start training the model
         self.model.train()
         self.trainingMetrics.reset()
+
         for batchId, (data, target) in enumerate(self.dataLoader):
             data, target = data.to(self.device), target.to(self.device)
 
             self.optimizer.zero_grad()
             output = self.model(data)
-            loss = self.criteria(output, target)
+            loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
 
+            # Update training metrics
             self.writer.set_step((epoch - 1)* self.epochLength + batchId)
             self.trainingMetrics.update("loss", loss.item())
             for individualMetric in self.metricFunction:
                 self.trainingMetrics.update(individualMetric.__name__, individualMetric(output, target))
 
+            # Update logger
             if batchId % self.loggingStep == 0:
-                self.logger.debug("Training Epoch: {} {} Loss: {}".format(epoch, self._progress(batchId), loss.item()))
+                self.logger.debug("Training Epoch: {} {} Loss: {}".format(epoch, self.progress(batchId), loss.item()))
                 self.writer.add_image("input", make_grid(data.cpu(), nrow=8, normalize=True))
 
+            # Stop training if all the epochs are covered
             if batchId == self.epochLength:
                 break
             
         log = self.trainingMetrics.result()
 
+        # Perform validation
         if self.performValidation:
-            validationLog = self._validate_epoch(epoch)
+            validationLog = self.validate_epoch(epoch)
             log.update(**{"val_"+key: value for key,value in validationLog.items()})
 
+        # Update Learning Rate based on Learning Rate Scheduler
         if self.learningRateScheduler is not None:
             self.learningRateScheduler.step()
 
         return log
 
-    def _validate_epoch(self, epoch):
+    def validate_epoch(self, epoch):
         """
+        Method to validate a single epoch.
+
+        Parameters
+        ----------
+        self    : Trainer
+                  Instance of the class
+        epoch   : int
+                  Current epoch number
+
+        Returns
+        -------
+        log     : dict
+                  Average of all the metrics in a dictionary
         """
+        # Set the model to evaluation mode and start validating the model
         self.model.eval()
         self.validationMetrics.reset()
 
@@ -78,21 +147,36 @@ class Trainer(BaseTrainer):
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
-                loss = self.criteria(output, target)
+                loss = self.criterion(output, target)
 
+                # Update training metrics
                 self.writer.set_step((epoch - 1) * len(self.validationDataLoader) + batchId, "valid")
                 self.validationMetrics.update("loss", loss.item())
                 for individualMetric in self.metricFunction:
                     self.validationMetrics.update(individualMetric.__name__, individualMetric(output, target))
                 self.writer.add_image("input", make_grid(data.cpu(), nrow=8, normalize=True))
 
+        # Update TensorBoardWriter
         for name, parameter in self.model.named_parameters():
             self.writer.add_histogram(name, parameter, bins="auto")
 
         return self.validationMetrics.result()
 
-    def _progress(self, batchId):
+    def progress(self, batchId):
         """
+        Method to calculate progress of training or validation.
+
+        Parameters
+        ----------
+        self    : Trainer
+                  Instance of the class
+        batchId : int
+                  Current batch ID
+
+        Returns
+        -------
+        progress    : str
+                      Amount of progress
         """
         base = "[{}/{} ({:.0f}%)]"
 

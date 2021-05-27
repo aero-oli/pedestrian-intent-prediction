@@ -8,17 +8,17 @@ from torch.utils.data.sampler import SubsetRandomSampler
 class BaseDataLoader(DataLoader):
     """
     Base class implementation for all data loaders. 
-    The class is inherited from nn.Module
+    The class is inherited from nn.Module.
     """
     def __init__(self, dataset, batchSize, shuffle, validationSplit, numberOfWorkers, collateFunction=default_collate):
         """
-        Method to initialize an object of type BaseDataLoader
+        Method to initialize an object of type BaseDataLoader.
 
         Parameters
         ----------
         self            : BaseDataLoader
                           Instance of the class
-        dataset         : Dataset
+        dataset         : torch.utils.data.Dataset
                           Dataset from which to load the data
         batchSize       : int
                           Number of samples per batch to load
@@ -29,7 +29,7 @@ class BaseDataLoader(DataLoader):
         numberOfWorkers : int
                           Number of subprocesses used for data loading
         collateFunction : callable
-                          Function to merge a list of samples to form a mini-bacth of Tensor(s). The default value is default_collate()
+                          Function to merge a list of samples to form a mini-bacth of Tensor(s) (Default value: default_collate()) 
 
         Returns
         -------
@@ -42,7 +42,7 @@ class BaseDataLoader(DataLoader):
         self.batchId = 0
         self.numberOfSamples = len(dataset)
 
-        self.sampler, self.validationSampler = self._split_sampler(self.validationSplit)
+        self.sampler, self.validationSampler = self.split_sampler(self.validationSplit)
 
         self.initialKeywordArguments = {
                                             'dataset': dataset,
@@ -54,7 +54,7 @@ class BaseDataLoader(DataLoader):
 
         super().__init__(sampler=self.sampler, **self.initialKeywordArguments)
 
-    def _split_sampler(self, split):
+    def split_sampler(self, split):
         """
         Method to split samplers for training and validation data.
 
@@ -117,4 +117,4 @@ class BaseDataLoader(DataLoader):
         if self.validationSampler is None:
             return None
         else:
-            return DataLoader(sampler=self.validationSampler, **self.initialKeywordArguments) #TODO: Could have a problem!
+            return DataLoader(sampler=self.validationSampler, **self.initialKeywordArguments)

@@ -10,7 +10,7 @@ class JAAD(Dataset):
     Class implementation for JAAD Dataset. 
     The class is inherited from nn.utils.data.Dataset
     """
-    def __init__(self, annotations, imageDirectoryFormat, train, sequenceLength, prediction, predictionLength):
+    def __init__(self, annotations, imageDirectoryFormat="", train=True, sequenceLength=0, prediction=True, predictionLength=0):
         """
         Method to initialize an object of type JAAD
 
@@ -37,16 +37,15 @@ class JAAD(Dataset):
                   Initialized object of class JAAD
         """
         self.annotations = annotations
-        self.imageDirectoryFormat = imageDirectoryFormat
-        self.training = train
-        self.sequenceLength = sequenceLength
-        self.prediction = prediction
-        self.predictionLength = predictionLength
+        # self.imageDirectoryFormat = imageDirectoryFormat
+        # self.training = train
+        # self.sequenceLength = sequenceLength
+        # self.prediction = prediction
+        # self.predictionLength = predictionLength
 
         with open(self.annotations, "rb") as annotationsFile:
             self.annotations = pickle.load(annotationsFile)
 
-        print("Type of self.annotations: {}".format(type(self.annotations)))
 
     def __len__(self):
         """
@@ -64,7 +63,7 @@ class JAAD(Dataset):
         """
         return len(self.annotations)
 
-    def __getitem__(self, id):
+    def __getitem__(self):
         """
         Method to allow instances to use the indexer opterators.
 
@@ -80,13 +79,8 @@ class JAAD(Dataset):
         length      : int
                       Length attribute of the object
         """
-        #print("id: {}".format(id))
-        #print("Type video: {}".format(type(video)))
-        #print("Video: {}".format(video))
-        
-        video = list(self.annotations.values())[id]
 
-        return video
+        return self.annotations
         
 
     """

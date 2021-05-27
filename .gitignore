@@ -130,9 +130,9 @@ dmypy.json
 
 # Dataset Folder
 data/datasets/*
-!data/datasets/README.md
-!data/datasets/custom_dataset.py
-!data/datasets/jaad_database.pkl
+!data/datasets/*.md
+!data/datasets/*.py
+!data/datasets/*.pkl
 
 # Saved Folder
 saved

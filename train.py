@@ -9,7 +9,8 @@ import model.loss as lossModule
 from utils import prepare_device
 import model.metric as metricModule
 from parse_config import ConfigParser
-import model.model as architectureModule
+# import model.model as architectureModule
+import model.social_stgcnn as architectureModule
 import data_loader.data_loaders as dataModule
 
 # Fix random seeds for reproducibility
@@ -22,16 +23,19 @@ np.random.seed(SEED)
 def main(configuration):
     """
     """
-    """
+
     logger = configuration.get_logger("train")
 
     # Setup Data loader Instances
-    """
+    print("Getting graph dataset... ")
     dataLoader = configuration.initialize_object("dataLoader", dataModule)
-    """
+
+    print("Validation...")
     validationDataLoader = dataLoader.split_validation()
 
+
     # Build Model Architecture and print to console
+    print("Build Model Architecture and print to console")
     model = configuration.initialize_object("arch", architectureModule)
     logger.info(model)
 
@@ -39,7 +43,7 @@ def main(configuration):
     device, deviceIds = prepare_device(configuration["n_gpu"])
     model = model.to(device)
     if len(deviceIds) > 1:
-        model = torch.nn.DataParallel(model, device_ids = deviceIds)
+        model = torch.nn.DataParallel(model, device_ids=deviceIds)
 
     print("device: {}".format(device))
     print("deviceIds: {}".format(deviceIds))
@@ -61,7 +65,6 @@ def main(configuration):
                       learningRateScheduler=learningRateScheduler)
 
     trainer.train()
-    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

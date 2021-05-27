@@ -52,9 +52,10 @@ conda init bash
 # Create a conda virtual environment
 echo "Creating a conda virtual environment..."
 echo ""
-source ~/Data/miniconda3/etc/profile.d/conda.sh                # Workaround (conda activate does not work from bash)
-conda create --yes --name $SOCIAL_STGCNN_VENV python=3.6
-conda activate $SOCIAL_STGCNN_VENV
+CONDA_BASE=$(conda info --base) && echo "Path to the conda base environment is $CONDA_BASE"
+source $CONDA_BASE/etc/profile.d/conda.sh && echo "Conda functions made available to subshells successfully!"
+conda create --yes --name $SOCIAL_STGCNN_VENV python=3.6 && echo "Conda virtual environment created successfully!"
+conda activate $SOCIAL_STGCNN_VENV && echo "Conda virtual environment activated successfully!"
 
 # Install all dependecies
 echo "Installing all dependecies..."

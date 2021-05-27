@@ -33,7 +33,7 @@
             "amsgrad": true
         }
     },
-    "loss": "negative_likelihood_loss",
+    "loss": "node_classification_loss",
     "metrics":
     [
         "accuracy", "top_k_accuracy"

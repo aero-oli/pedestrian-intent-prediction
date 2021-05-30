@@ -4,13 +4,17 @@ import torch
 import pickle
 import numpy as np
 from torch.utils.data import Dataset
+from torch_geometric.data import Dataset, Data, download_url
+import os.path as osp
 
-class JAAD(Dataset):
+
+
+class old_JAAD(Dataset):
     """
     Class implementation for JAAD Dataset. 
     The class is inherited from nn.utils.data.Dataset
     """
-    def __init__(self, annotations, imageDirectoryFormat="", train=True, sequenceLength=0, prediction=True, predictionLength=0):
+    def __init__(self, annotations):
         """
         Method to initialize an object of type JAAD
 
@@ -142,3 +146,81 @@ class JAAD(Dataset):
 
         return returnValue
     """
+
+
+
+class JAAD(Dataset):
+    def __init__(self, original_annotations, root, transform=None, pre_transform=None):
+        with open(original_annotations, "rb") as annotationsFile:
+            self.original_annotations = pickle.load(annotationsFile)
+        self.graph_annotations = {}
+        super(JAAD, self).__init__(root, transform, pre_transform)
+
+    @property
+    def raw_file_names(self):
+        return list(self.original_annotations.keys())
+
+    @property
+    def processed_file_names(self):
+        # return ['data_1.pt', 'data_2.pt', ...]
+        return list(self.original_annotations.keys())
+
+    def process(self):
+
+        for video_id, video_value in self.original_annotations.items():
+            graph_video = []
+            width = video_value['width']
+            height = video_value['height']
+            for frame_id, frame_value in video_value['frames'].items():
+                node_position = np.empty(shape=4)
+                node_appearance = np.empty(shape=25)
+                node_attributes = np.empty(shape=12)
+                node_behavior = np.empty(shape=6)
+                node_ground_truth = np.empty(shape=3)
+                edge_index = np.empty(shape=[2, 1])
+                for object_id, object_value in frame_value.items():
+                    node_behavior = np.vstack([node_behavior, np.array(
+                        [int(object_behavior_value) for object_behavior_id, object_behavior_value in
+                         object_value['behavior'].items()])])
+                    node_attributes = np.vstack([node_attributes, np.array(
+                        [int(node_attributes_value) for node_attributes_id, node_attributes_value in
+                         object_value['attributes'].items() if not node_attributes_id == 'old_id'])])
+
+                    node_appearance = np.vstack([node_appearance, np.array(
+                        [int(object_appearance_value) for object_appearance_id, object_appearance_value in
+                         object_value['appearance'].items()])])
+
+                    node_position = np.vstack([node_position, object_value['bbox']])
+
+                    node_ground_truth = np.vstack([node_ground_truth, np.array(
+                        [x if not x is None else 2 for x in object_value['ground_truth']])])
+
+                node_features = np.delete(np.hstack([node_appearance, node_attributes, node_behavior]), 0, 0)
+                if node_features.shape[0] > 1:
+                    edge_index = np.hstack([edge_index,
+                                            [[[j, i], [i, j]] for i in range(node_features.shape[0]) for j in
+                                             range(i + 1) if i != j][0]])
+
+                graph_video.append(Data(x=torch.as_tensor(node_features),
+                                                   edge_index=torch.as_tensor(np.delete(edge_index, 0, 1),
+                                                                              dtype=torch.long),
+                                                   y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
+                                                   pos=torch.as_tensor(np.delete(node_position, 0, 0)),
+                                                   width=torch.as_tensor(width),
+                                                   height=torch.as_tensor(height)))
+            self.graph_annotations.update({video_id: graph_video})
+
+            if self.pre_filter is not None and not self.pre_filter(graph_video):
+                continue
+
+            if self.pre_transform is not None:
+                graph_video = self.pre_transform(graph_video)
+
+            torch.save(graph_video, osp.join(self.processed_dir, '{}.pt'.format(video_id)))
+
+    def len(self):
+        return len(self.processed_file_names)
+
+    def get(self, idx):
+        data = torch.load(osp.join(self.processed_dir, '{}.pt'.format(list(self.original_annotations.keys())[idx])))
+        return data

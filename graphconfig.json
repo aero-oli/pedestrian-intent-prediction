@@ -12,11 +12,8 @@
         "args":
         {
             "annotation_path": "data/datasets/jaad_frame_by_frame_database.pkl",
-            "imageDirectoryFormat": "data/", 
+            "root": "data/datasets/",
             "batchSize": 1,
-            "sequenceLength": 30,
-            "prediction": false,
-            "predictionLength": [15, 30, 45],
             "shuffle": true, 
             "validationSplit": 0.3, 
             "numberOfWorkers": 1, 

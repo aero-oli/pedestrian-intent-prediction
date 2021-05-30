@@ -13,11 +13,11 @@ import data.datasets.custom_dataset as customDataset
 class MnistDataLoader(BaseDataLoader):
     """
     Class implementation for MnistDataLoader.
-    The class is inherited from the class BaseDataLoader
+    The class is inherited from the class BaseDataLoader.
     """
     def __init__(self, dataDirectory, batchSize, shuffle=True, validationSplit=0.0, numberOfWorkers=1, training=True):
         """
-        Method to initialize an object of type MnistDataLoader
+        Method to initialize an object of type MnistDataLoader.
 
         Parameters
         ----------
@@ -41,6 +41,7 @@ class MnistDataLoader(BaseDataLoader):
         self    : MnistDataLoader
                   Initialized object of class MnistDataLoader
         """
+        # Download dataset, perform the required transforms and load the dataset into a dataloader
         requiredTransformations = transforms.Compose([
                                                         transforms.ToTensor(),
                                                         transforms.Normalize((0.1307,), (0.3081,))

@@ -2,12 +2,11 @@
 import torch
 
 import utils
-from sklearn import preprocessing
 import pickle
 import numpy as np
 from base import BaseDataLoader
 from torchvision import datasets, transforms
-from torch_geometric.data import Data
+from torch_geometric.data import Data, DataLoader
 import data.datasets.custom_dataset as customDataset
 
 class MnistDataLoader(BaseDataLoader):
@@ -56,7 +55,7 @@ class JaadDataLoader(BaseDataLoader):
     Class implementation for JaadDataLoader.
     The class is inherited from the class BaseDataLoader
     """
-    def __init__(self, annotation_path, imageDirectoryFormat, batchSize, sequenceLength, prediction, predictionLength, shuffle=True, validationSplit=0.1, numberOfWorkers=1, training=True):
+    def __init__(self, annotation_path, root, batchSize, shuffle=True, validationSplit=0.1,  numberOfWorkers=1, training=True):
         """
         Method to initialize an object of type JaadDataLoader
 
@@ -72,8 +71,6 @@ class JaadDataLoader(BaseDataLoader):
                                   Number of samples per batch to load
         sequenceLength          : int
                                   Length of the frame sequence for each pedestrian
-        prediction              : bool
-                                  Set to True to have prediction made in the future
         predictionLength        : int
                                   Length of the prediction frame sequence for each pedestrian
         suffle                  : bool
@@ -107,8 +104,16 @@ class JaadDataLoader(BaseDataLoader):
 
         super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)
         """
-        self.dataset = customDataset.JAAD(annotation_path, imageDirectoryFormat, train=training, sequenceLength=sequenceLength, prediction=prediction, predictionLength=predictionLength)
 
+
+        # self.dataset = customDataset.JAAD(annotation_path, root)
+        # loader = DataLoader(self.dataset, batch_size=batchSize, shuffle=False)
+        # print("Dataset loaded...")
+        # for data in loader:
+        #     print(data)
+        #     break
+
+        self.dataset = customDataset.old_JAAD(annotation_path)
         d = self.dataset.__getitem__()
         # d = utils.jaad_annotation_converter(self.dataset.__getitem__())
 
@@ -154,5 +159,6 @@ class JaadDataLoader(BaseDataLoader):
                             height=torch.as_tensor(height))})
             self.graph_dataset.update({video_id: graph_video})
 
-        super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)
-        # super().__init__(self.dataset, shuffle, validationSplit, numberOfWorkers, collateFunction=customDataset.collate_jaad)
+        print(self.graph_dataset.keys())
+
+        # super().__init__(self.graph_dataset, batchSize, shuffle, validationSplit, numberOfWorkers)

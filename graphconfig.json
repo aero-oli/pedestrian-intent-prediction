@@ -6,15 +6,24 @@
         "type": "social_stgcn",
         "args": {}
     },
+    "dataset":
+    {
+        "type": "JAAD",
+        "args":
+        {
+            "original_annotations": "data/datasets/jaad_frame_by_frame_database.pkl",
+            "root": "data/datasets/"
+        }
+    },
     "dataLoader":
     {
         "type": "JaadDataLoader",
         "args":
         {
-            "annotation_path": "data/datasets/jaad_frame_by_frame_database.pkl",
+            "annotation_path": "data/datasets/overall_database.pkl",
             "root": "data/datasets/",
             "batchSize": 1,
-            "shuffle": true, 
+            "shuffle": false,
             "validationSplit": 0.3, 
             "numberOfWorkers": 1, 
             "training": true

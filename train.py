@@ -12,6 +12,8 @@ from parse_config import ConfigParser
 # import model.model as architectureModule
 import model.social_stgcnn as architectureModule
 import data_loader.data_loaders as dataModule
+from torch_geometric.data import Data, DataLoader
+import data.datasets.custom_dataset as customDataset
 
 # Fix random seeds for reproducibility
 SEED = 123
@@ -35,11 +37,22 @@ def main(configuration):
     """
 
     logger = configuration.get_logger("train")
-
     # Setup Data loader Instances
     print("Getting graph dataset... ")
+
+
     dataLoader = configuration.initialize_object("dataLoader", dataModule)
 
+
+    # dataset = configuration.initialize_object("dataset", customDataset)
+    # loader = DataLoader(dataset, batch_size=1, shuffle=False)
+
+    # for idx, batch in enumerate(loader):
+    #     print("Batch frames for {}: {}".format(dataset.raw_file_names[idx], len(batch)))
+
+
+
+    '''
     print("Validation...")
     validationDataLoader = dataLoader.split_validation()
 
@@ -72,6 +85,7 @@ def main(configuration):
                       learningRateScheduler=learningRateScheduler)
 
     trainer.train()
+    '''
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

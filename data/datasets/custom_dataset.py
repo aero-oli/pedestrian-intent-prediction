@@ -46,8 +46,9 @@ class old_JAAD(Dataset):
         # self.sequenceLength = sequenceLength
         # self.prediction = prediction
         # self.predictionLength = predictionLength
-
+        print(self.annotations)
         with open(self.annotations, "rb") as annotationsFile:
+            print(annotationsFile)
             self.annotations = pickle.load(annotationsFile)
 
 
@@ -151,9 +152,11 @@ class old_JAAD(Dataset):
 
 class JAAD(Dataset):
     def __init__(self, original_annotations, root, transform=None, pre_transform=None):
+
         with open(original_annotations, "rb") as annotationsFile:
             self.original_annotations = pickle.load(annotationsFile)
         self.graph_annotations = {}
+
         super(JAAD, self).__init__(root, transform, pre_transform)
 
     @property
@@ -162,7 +165,6 @@ class JAAD(Dataset):
 
     @property
     def processed_file_names(self):
-        # return ['data_1.pt', 'data_2.pt', ...]
         return list(self.original_annotations.keys())
 
     def process(self):
@@ -171,6 +173,7 @@ class JAAD(Dataset):
             graph_video = []
             width = video_value['width']
             height = video_value['height']
+            print("Annotation frames for {}: {}".format(video_id, len(list(video_value['frames'].keys()))))
             for frame_id, frame_value in video_value['frames'].items():
                 node_position = np.empty(shape=4)
                 node_appearance = np.empty(shape=25)

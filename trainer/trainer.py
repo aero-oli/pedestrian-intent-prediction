@@ -2,6 +2,8 @@
 
 import torch
 import numpy as np
+
+import data_loader
 from base import BaseTrainer
 from torchvision.utils import make_grid
 from utils import infinte_loop, MetricTracker
@@ -84,39 +86,49 @@ class Trainer(BaseTrainer):
         # Set the model to training mode and start training the model
         self.model.train()
         self.trainingMetrics.reset()
-
+        print(type(self.dataLoader) is data_loader.data_loaders.JaadDataLoader)
         for batchId, (data, target) in enumerate(self.dataLoader):
+            print(1)
             data, target = data.to(self.device), target.to(self.device)
+            print(2)
 
             self.optimizer.zero_grad()
+            print(3)
             output = self.model(data)
-            loss = self.criterion(output, target)
+            print(4)
+            loss = self.criteria(output, target)
+            print(5)
             loss.backward()
+            print(6)
             self.optimizer.step()
+            print(7)
 
             # Update training metrics
             self.writer.set_step((epoch - 1)* self.epochLength + batchId)
+            print(8)
             self.trainingMetrics.update("loss", loss.item())
+            print(9)
             for individualMetric in self.metricFunction:
                 self.trainingMetrics.update(individualMetric.__name__, individualMetric(output, target))
 
-            # Update logger
+            print(10)
             if batchId % self.loggingStep == 0:
                 self.logger.debug("Training Epoch: {} {} Loss: {}".format(epoch, self.progress(batchId), loss.item()))
                 self.writer.add_image("input", make_grid(data.cpu(), nrow=8, normalize=True))
 
-            # Stop training if all the epochs are covered
+            print(11)
             if batchId == self.epochLength:
                 break
-            
+
+        print(12)
         log = self.trainingMetrics.result()
 
-        # Perform validation
+        print(13)
         if self.performValidation:
             validationLog = self.validate_epoch(epoch)
             log.update(**{"val_"+key: value for key,value in validationLog.items()})
 
-        # Update Learning Rate based on Learning Rate Scheduler
+        print(14)
         if self.learningRateScheduler is not None:
             self.learningRateScheduler.step()
 

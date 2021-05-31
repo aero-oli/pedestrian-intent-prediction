@@ -40,7 +40,7 @@ class ConfigParser:
         self.resume = resume
 
         # Set Save directory where trained model and the log would be saved
-        saveDirectory = Path(self.configuration["trainer"]["saveDirectory"])
+        saveDirectory = Path(self.configuration["trainer"]["save_dir"])
 
         experimentName = self.configuration["name"]
         if runId is None:

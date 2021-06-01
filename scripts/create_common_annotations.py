@@ -2,6 +2,7 @@
 
 import glob
 import argparse
+import pickle
 import pandas as pd
 from pathlib import Path
 
@@ -84,8 +85,8 @@ def create_common_annotations(pedestrianAnnotationsPath, sceneAnnotationsPath, o
     # Save Common Annotations File as a Pickle File
     commonAnnotationsPath = outputDirectory / "overall_database.pkl"
     print("Path of the common annotations file: {}".format(commonAnnotationsPath))
-    with open(str(commonAnnotationsPath), "w+") as commonAnnotationsFile:
-        commonAnnotationsFile.write(str(commonDatabase))
+    with open(str(commonAnnotationsPath), "wb") as commonAnnotationsFile:
+        pickle.dump(commonDatabase, commonAnnotationsFile, protocol=pickle.HIGHEST_PROTOCOL)
 
     print("Succesfully created a common annotations file!!")
 
@@ -111,3 +112,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

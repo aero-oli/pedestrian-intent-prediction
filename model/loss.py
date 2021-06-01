@@ -22,9 +22,9 @@ def negative_likelihood_loss(output, target):
 
 
 
-def node_classification_loss(output, target):
+def binary_cross_entropy_loss(output, target):
     """
-    Function to calculate the negative likelihood loss.
+    Function to calculate the binary cross entropy loss.
 
     Parameters
     ----------
@@ -36,6 +36,6 @@ def node_classification_loss(output, target):
     Returns
     -------
     loss    : float
-              Negative Likelihood Loss
+              Binary Cross Entropy Loss
     """
-    return function.nll_loss(output, target)
+    return function.binary_cross_entropy(output, target)

@@ -12,8 +12,7 @@ filters = 32
 
 
 class social_stgcn(torch.nn.Module):
-    def __init__(self,n_stgcnn =1,n_txpcnn=1,input_feat=2,output_feat=5,
-                 seq_len=8,pred_seq_len=12,stgcn_kernel_size=3):
+    def __init__(self,n_stgcnn =1,input_feat=2,output_feat=5,stgcn_kernel_size=3):
         super(social_stgcn, self).__init__()
         self.n_stgcnn = n_stgcnn
 
@@ -31,4 +30,4 @@ class social_stgcn(torch.nn.Module):
         h = F.relu(h)
         h = self.linear(h)
 
-        return h
+        return F.log_softmax(h, dim=1)

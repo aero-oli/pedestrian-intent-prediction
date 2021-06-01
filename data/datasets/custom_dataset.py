@@ -173,7 +173,6 @@ class JAAD(Dataset):
             graph_video = []
             width = video_value['width']
             height = video_value['height']
-            print("Annotation frames for {}: {}".format(video_id, len(list(video_value['frames'].keys()))))
             for frame_id, frame_value in video_value['frames'].items():
                 node_position = np.empty(shape=4)
                 node_appearance = np.empty(shape=25)

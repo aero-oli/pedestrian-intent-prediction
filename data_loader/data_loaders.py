@@ -105,7 +105,6 @@ class JaadDataLoader(BaseDataLoader):
         super().__init__(self.dataset, batchSize, shuffle, validationSplit, numberOfWorkers)
         """
 
-
         # self.dataset = customDataset.JAAD(annotation_path, root)
         # loader = DataLoader(self.dataset, batch_size=batchSize, shuffle=False)
         # print("Dataset loaded...")
@@ -115,14 +114,19 @@ class JaadDataLoader(BaseDataLoader):
 
         self.dataset = customDataset.old_JAAD(annotation_path)
         d = self.dataset.__getitem__()
+
+        utils.save_annotations(utils.jaad_annotation_converter(d), "overall_frame_by_frame_database")
         # d = utils.jaad_annotation_converter(self.dataset.__getitem__())
 
+        '''
+        
         self.graph_dataset = {}
 
         for video_id, video_value in d.items():
             graph_video = {}
             width = video_value['width']
             height = video_value['height']
+            print(video_value.keys())
             for frame_id, frame_value in video_value['frames'].items():
                 node_position = np.empty(shape=4)
                 node_appearance = np.empty(shape=25)
@@ -160,5 +164,5 @@ class JaadDataLoader(BaseDataLoader):
             self.graph_dataset.update({video_id: graph_video})
 
         print(self.graph_dataset.keys())
-
+        '''
         # super().__init__(self.graph_dataset, batchSize, shuffle, validationSplit, numberOfWorkers)

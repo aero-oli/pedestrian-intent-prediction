@@ -11,7 +11,7 @@
         "type": "JAAD",
         "args":
         {
-            "original_annotations": "data/datasets/jaad_frame_by_frame_database.pkl",
+            "original_annotations": "data/datasets/overall_frame_by_frame_database.pkl",
             "root": "data/datasets/"
         }
     },

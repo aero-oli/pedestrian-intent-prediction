@@ -223,8 +223,9 @@ class JAAD(Dataset):
                         np.hstack([np.zeros(shape=(node_vehicle_features.shape[0], node_features.shape[1])),
                                    node_vehicle_features])
                     ])
+                # if video_id == "video_0001" and frame_id == 0: print(nodes)
 
-                graph_video.append(Data(x=torch.as_tensor(np.delete(nodes, 0, 0)),
+                graph_video.append(Data(x=torch.as_tensor(nodes),
                                         edge_index=torch.as_tensor(edge_index, dtype=torch.long),
                                         y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
                                         pos=torch.as_tensor(np.delete(node_position, 0, 0)),

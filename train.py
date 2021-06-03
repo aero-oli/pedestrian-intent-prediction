@@ -36,19 +36,26 @@ def main(configuration):
     None
     """
 
-    logger = configuration.get_logger("train")
+    # logger = configuration.get_logger("train")
     # Setup Data loader Instances
     print("Getting graph dataset... ")
 
+    # dataLoader = configuration.initialize_object("dataLoader", dataModule)
 
-    dataLoader = configuration.initialize_object("dataLoader", dataModule)
+    dataset = configuration.initialize_object("dataset", customDataset)
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = architectureModule.social_stgcn().to(device)
+    dataset.to_device(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    # dataset = configuration.initialize_object("dataset", customDataset)
-    # loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-    # for idx, batch in enumerate(loader):
-    #     print("Batch frames for {}: {}".format(dataset.raw_file_names[idx], len(batch)))
+    for idx_video, video in enumerate(loader):
+        for idx_frame, frame in enumerate(video):
+            optimizer.zero_grad()
+            out = model(frame)
+        break
 
 
 

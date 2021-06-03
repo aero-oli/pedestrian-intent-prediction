@@ -247,3 +247,9 @@ class JAAD(Dataset):
     def get(self, idx):
         data = torch.load(osp.join(self.processed_dir, '{}.pt'.format(list(self.original_annotations.keys())[idx])))
         return data
+
+    def to_device(self, device):
+        for video_id, video in self.graph_annotations.items():
+            for idx, data in enumerate(video):
+                video[idx] = data.to(device)
+            self.graph_annotations.update({video_id: video})

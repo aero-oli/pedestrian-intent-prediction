@@ -50,8 +50,8 @@ def main(configuration):
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    loader = DataLoader(dataset, batch_size=0, shuffle=False)
-
+    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    # print(dataset)
     print("Start training...")
 
     for idx_video, video in enumerate(loader):

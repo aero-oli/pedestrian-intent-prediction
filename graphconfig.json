@@ -62,5 +62,16 @@
         "monitor": "min val_loss",
         "early_stop": 10,
         "tensorboard": true
+    },
+    "model": {
+        "type": "social_stgcn",
+        "args": {
+            "input_feat": 10,
+            "hidden_channels": 5,
+            "output_feat": 5,
+            "stgcn_kernel_size": 3,
+            "num_nodes": 1,
+            "K": 1
+        }
     }
 }

@@ -8,6 +8,7 @@ from trainer import Trainer
 import model.loss as lossModule
 from utils import prepare_device
 import model.metric as metricModule
+import torch.nn.functional as F
 from parse_config import ConfigParser
 # import model.model as architectureModule
 import model.social_stgcnn as architectureModule
@@ -45,18 +46,24 @@ def main(configuration):
     dataset = configuration.initialize_object("dataset", customDataset)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = architectureModule.social_stgcn().to(device)
+    model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    loader = DataLoader(dataset, batch_size=0, shuffle=False)
+
+    print("Start training...")
 
     for idx_video, video in enumerate(loader):
+        print("Trainging Video_{}, Number of frames:{}"
+              .format("{}".format(idx_video).zfill(4), len(video)))
+
         for idx_frame, frame in enumerate(video):
             optimizer.zero_grad()
+            for id, a in frame:
+                print(id, a)
             out = model(frame)
-        break
-
+            # loss = F.
 
 
     '''

@@ -1,21 +1,21 @@
 {
     "name": "Mnist_LeNet",
-    "n_gpu": 1,
-    "arch": 
+    "numberOfGpus": 1,
+    "architecture": 
     {
         "type": "MnistModel",
         "args": {}
     },
-    "data_loader": 
+    "dataLoader": 
     {
         "type": "MnistDataLoader",
         "args":
         {
-            "dataDirectory": "data/",
+            "dataDirectory": "data\\",
             "batchSize": 128,
             "shuffle": true,
             "validationSplit": 0.1,
-            "numberOfWorkers": 2
+            "numberOfWorkers": 1
         }
     },
     "optimizer": 
@@ -33,7 +33,7 @@
     [
         "accuracy", "top_k_accuracy"
     ],
-    "lr_scheduler": 
+    "learningRateScheduler": 
     {
         "type": "StepLR",
         "args": 
@@ -44,12 +44,12 @@
     },
     "trainer": 
     {
-        "epochs": 100,
-        "save_dir": "saved/",
-        "save_period": 1,
+        "epochs": 50,
+        "saveDirectory": "saved\\",
+        "savePeriod": 1,
         "verbosity": 2,
         "monitor": "min val_loss",
-        "early_stop": 10,
+        "earlyStop": 10,
         "tensorboard": true
     }
 }

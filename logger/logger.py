@@ -22,12 +22,13 @@ def setup_logging(saveDirectory, loggerConfig="logger/logger_config.json", defau
     -------
     None
     """
+    # Evaluate if the logging configuration exists and set up logger
     loggerConfig = Path(loggerConfig)
     if loggerConfig.is_file():
         config = read_json(loggerConfig)
-        for _, handler in config['handlers'].items():
-            if 'filename' in handler:
-                handler['filename'] = str(saveDirectory / handler['filename'])
+        for _, handler in config["handlers"].items():
+            if "filename" in handler:
+                handler["filename"] = str(saveDirectory / handler["filename"])
 
         logging.config.dictConfig(config)
     else:

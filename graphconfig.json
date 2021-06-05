@@ -6,18 +6,24 @@
         "type": "social_stgcn",
         "args": {}
     },
+    "dataset":
+    {
+        "type": "JAAD",
+        "args":
+        {
+            "original_annotations": "data/datasets/overall_frame_by_frame_database.pkl",
+            "root": "data/datasets/"
+        }
+    },
     "dataLoader":
     {
         "type": "JaadDataLoader",
         "args":
         {
-            "annotation_path": "data/datasets/jaad_frame_by_frame_database.pkl",
-            "imageDirectoryFormat": "data/", 
+            "annotation_path": "data/datasets/overall_database.pkl",
+            "root": "data/datasets/",
             "batchSize": 1,
-            "sequenceLength": 30,
-            "prediction": false,
-            "predictionLength": [15, 30, 45],
-            "shuffle": true, 
+            "shuffle": false,
             "validationSplit": 0.3, 
             "numberOfWorkers": 1, 
             "training": true
@@ -33,7 +39,7 @@
             "amsgrad": true
         }
     },
-    "loss": "negative_likelihood_loss",
+    "loss": "node_classification_loss",
     "metrics":
     [
         "accuracy", "top_k_accuracy"
@@ -56,5 +62,16 @@
         "monitor": "min val_loss",
         "early_stop": 10,
         "tensorboard": true
+    },
+    "model": {
+        "type": "social_stgcn",
+        "args": {
+            "input_feat": 10,
+            "hidden_channels": 5,
+            "output_feat": 5,
+            "stgcn_kernel_size": 3,
+            "num_nodes": 1,
+            "K": 1
+        }
     }
 }

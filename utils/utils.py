@@ -3,6 +3,7 @@
 import json
 import torch
 import pandas as pd
+import pickle
 from torch_geometric.data import Data
 from pathlib import Path
 from itertools import repeat
@@ -10,7 +11,7 @@ from collections import OrderedDict
 
 class MetricTracker:
     """
-    Class implementation for tracking all the metrics
+    Class implementation for tracking all the metrics.
     """
     def __init__(self, *keys, writer=None):
         """
@@ -20,7 +21,7 @@ class MetricTracker:
         ----------
         self    : MetricTracker
                   Instance of the class
-        *keys   : Multiple
+        *keys   : tuple
                   Multiple number of non-keyword arguments
         writer  : SummaryWriter
                   Writer to log data for consumption and visualization by TensorBoard
@@ -63,7 +64,7 @@ class MetricTracker:
         value           : Multiple
                           Value of Metric
         numberOfMetrics : int
-                          Number of metrics
+                          Number of metrics (Default value: 1)
 
         Returns
         -------
@@ -72,7 +73,7 @@ class MetricTracker:
         if self.writer is not None:
             self.writer.add_scalar(key, value)
         self.data.total[key] += value * numberOfMetrics
-        self.data.counts[key] = numberOfMetrics
+        self.data.counts[key] += numberOfMetrics
         self.data.average[key] = self.data.total[key] / self.data.counts[key]
     
     def average(self, key):
@@ -85,10 +86,6 @@ class MetricTracker:
                           Instance of the class
         key             : Multiple
                           Type of metric
-        value           : Multiple
-                          Value of Metric
-        numberOfMetrics : int
-                          Number of metrics
 
         Returns
         -------
@@ -171,7 +168,7 @@ def write_json(content, fileName):
 
 def infinte_loop(dataLoader):
     """
-    Wrapper function for endless data loader
+    Wrapper function for endless data loader.
 
     Parameters
     ----------
@@ -213,13 +210,13 @@ def prepare_device(numberOfGpusToBeUsed):
                 "Switching to {} number of GPUs for training!".format(numberOfGpusToBeUsed, numberOfGpusAvailable, numberOfGpusAvailable))
         numberOfGpusToBeUsed = numberOfGpusAvailable
 
-    device = torch.device('cuda' if numberOfGpusToBeUsed > 0 else 'cpu') #TODO: To be checked if this is correct!
+    device = torch.device('cuda' if numberOfGpusToBeUsed > 0 else 'cpu')
     gpuIdList = list(range(numberOfGpusToBeUsed))
 
     return device, gpuIdList
 
 
-def jaad_annotation_converter(dataset):
+def jaad_annotation_converter(dataset, print_variation=False):
     '''
     Converts the jaad dataset from the default pedestrian oriented ordet to a frame-by-frame order.
 
@@ -230,6 +227,7 @@ def jaad_annotation_converter(dataset):
     prediction_length = [15, 30, 45]
 
     new_annotations = {}
+    vehicle_type_variation = []
     for video_name, video in dataset.items():
         video_dict = {}
         video_dict.update({'width': video.get('width')})
@@ -251,26 +249,47 @@ def jaad_annotation_converter(dataset):
                             elif type(pedestrian_annotation_value) is list:
                                 pedestrian_id_dict.update({pedestrian_annotation: pedestrian_annotation_value[frame_index]})
                             elif type(pedestrian_annotation_value) is dict:
-                                pedestiran_id_sub_dict = {}
+                                pedestiran_id_annotation_dict = {}
                                 for pedestrian_annotation_sub_id, pedestrian_annotation_sub_value in pedestrian_annotation_value.items():
                                     if pedestrian_annotation_sub_id == 'cross':
                                         frame_prediction_length = [pedestrian_annotation_sub_value[x] if not x is None and x < len(pedestrian_annotation_sub_value) else None for x in frame_prediction_length]
                                     if type(pedestrian_annotation_sub_value) is list:
-                                        pedestiran_id_sub_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value[frame_index]})
+                                        pedestiran_id_annotation_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value[frame_index]})
                                     else:
-                                        pedestiran_id_sub_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value})
-                                pedestrian_id_dict.update({pedestrian_annotation: pedestiran_id_sub_dict})
+                                        pedestiran_id_annotation_dict.update({pedestrian_annotation_sub_id: pedestrian_annotation_sub_value})
+                                pedestrian_id_dict.update({pedestrian_annotation: pedestiran_id_annotation_dict})
                                 pedestrian_id_dict.update({'ground_truth': frame_prediction_length})
                     frame_dict.update({pedestrian_id: pedestrian_id_dict})
-                all_frames_dict.update({frame_no: frame_dict})
-            # for vehicle_id, vehicle_value in video.get('vehicle_annotations').items():
-            #     print("vehicle_value: ",vehicle_value)
+            for vehicle_id, vehicle_value in video.get('vehicle_annotations').items():
+                vehicle_id_dict = {}
+                if frame_no in vehicle_value.get('frames'):
+                    frame_index = vehicle_value.get('frames').index(frame_no)
+                    for vehicle_annotation_id, vehicle_annotation_value in vehicle_value.items():
+                        vehicle_annotation_dict = {}
+                        if vehicle_annotation_id == 'vehicle_type':
+                            vehicle_id_dict.update({vehicle_annotation_id: vehicle_annotation_value})
+                            if not vehicle_annotation_value in vehicle_type_variation: vehicle_type_variation.append(vehicle_annotation_value)
+                        elif vehicle_annotation_id == 'bbox':
+                            vehicle_id_dict.update({vehicle_annotation_id: list(vehicle_annotation_value)[frame_index]})
+                    frame_dict.update({vehicle_id: vehicle_id_dict})
             # for traffic_id, traffic_value in video.get('traffic_annotations').items():
             #     print("traffic_value: ",traffic_value)
-        video_dict.update({'frames': all_frames_dict})
+            all_frames_dict.update({frame_no: frame_dict})
+            video_dict.update({'frames': all_frames_dict})
         new_annotations.update({video_name: video_dict})
-
+    if print_variation:
+        print("Variation of vehicle types: {}".format(vehicle_type_variation))
     return new_annotations
 
 
+def save_annotations(annotations, name):
+    '''
+
+    :param annotations:
+    :param name:
+    :return:
+    '''
+
+    with open('{}.pkl'.format(name), 'wb') as handle:
+        pickle.dump(annotations, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

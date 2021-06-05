@@ -17,7 +17,7 @@ class MnistModel(BaseModel):
         self            : MnistModel
                           Instance of the class
         numberOfClasses : int
-                          Number of output classes (default = 10)
+                          Number of output classes (Default value: 10)
 
         Returns
         -------
@@ -39,12 +39,12 @@ class MnistModel(BaseModel):
         ----------
         self    : MnistModel
                   Instance of the class
-        x       : tensor
+        x       : torch.Tensor
                   Input to the neural network
 
         Returns
         -------
-        y       : tensor
+        y       : torch.Tensor
                   Prediction from the neural network
         """
         x = function.relu(function.max_pool2d(self.conv1(x), 2))

@@ -13,13 +13,14 @@ from parse_config import ConfigParser
 # import model.model as architectureModule
 import model.social_stgcnn as architectureModule
 import data_loader.data_loaders as dataModule
-from torch_geometric.data import Data, DataLoader
+from torch_geometric.data import Data, Batch, DenseDataLoader, DataLoader
 import data.datasets.custom_dataset as customDataset
 
 # Fix random seeds for reproducibility
 SEED = 123
 torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
+torch.set_default_dtype(torch.double)
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
@@ -50,21 +51,18 @@ def main(configuration):
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    loader = DataLoader(dataset, batch_size=1, shuffle=False)
-    # print(dataset)
+    # print(model)
     print("Start training...")
 
-    for idx_video, video in enumerate(loader):
+    for idx_batch, batch in enumerate(dataset):
+        batch = Batch.from_data_list(batch)
         print("Trainging Video_{}, Number of frames:{}"
-              .format("{}".format(idx_video).zfill(4), len(video)))
+              .format("{}".format(idx_batch).zfill(4), len(batch)))
 
-        for idx_frame, frame in enumerate(video):
-            optimizer.zero_grad()
-            for id, a in frame:
-                print(id, a)
-            out = model(frame)
-            # loss = F.
-
+        optimizer.zero_grad()
+        out = model(batch, device)
+        # loss = F.
+        break
 
     '''
     print("Validation...")

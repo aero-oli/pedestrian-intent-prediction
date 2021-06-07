@@ -4,7 +4,7 @@ import torch
 import pickle
 import numpy as np
 from torch.utils.data import Dataset
-from torch_geometric.data import Dataset, Data, download_url
+from torch_geometric.data import Dataset, Data, download_url, Batch
 import os.path as osp
 
 

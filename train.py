@@ -38,11 +38,7 @@ def main(configuration):
     None
     """
 
-    # logger = configuration.get_logger("train")
-    # Setup Data loader Instances
     print("Getting graph dataset... ")
-
-    # dataLoader = configuration.initialize_object("dataLoader", dataModule)
 
     dataset = configuration.initialize_object("dataset", customDataset)
 
@@ -51,17 +47,21 @@ def main(configuration):
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    # print(model)
     print("Start training...")
-
-    for idx_batch, batch in enumerate(dataset):
-        batch = Batch.from_data_list(batch)
+    model.train()
+    for idx_data, data in enumerate(dataset):
         print("Trainging Video_{}, Number of frames:{}"
-              .format("{}".format(idx_batch).zfill(4), len(batch)))
-
+              .format("{}".format(idx_data).zfill(4), len(data)))
+        batch = Batch.from_data_list(data)
         optimizer.zero_grad()
         out = model(batch, device)
-        # loss = F.
+        y = torch.cat([batch.y.cuda(), torch.ones(size=[out.shape[0]-batch.y.shape[0],
+                                                 batch.y.shape[1]], device=device)], dim=0)
+        print(y.dtype, out.dtype)
+        loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
+        loss.backward()
+        optimizer.step()
+
         break
 
     '''

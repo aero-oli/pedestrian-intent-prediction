@@ -22,6 +22,7 @@ torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.double)
 torch.backends.cudnn.benchmark = False
+torch.autograd.set_detect_anomaly(True)
 np.random.seed(SEED)
 
 def main(configuration):
@@ -56,7 +57,7 @@ def main(configuration):
         optimizer.zero_grad()
         out = model(batch, device)
         y = torch.cat([batch.y.cuda(), torch.ones(size=[out.shape[0]-batch.y.shape[0],
-                                                 batch.y.shape[1]], device=device)], dim=0)
+                                                 batch.y.shape[1]], device=device)*2], dim=0)
         print(y.dtype, out.dtype)
         loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
         loss.backward()

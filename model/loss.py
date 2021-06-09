@@ -38,4 +38,4 @@ def binary_cross_entropy_loss(output, target):
     loss    : float
               Binary Cross Entropy Loss
     """
-    return F.binary_cross_entropy(output, target)
+    return F.binary_cross_entropy_with_logits(output, target)

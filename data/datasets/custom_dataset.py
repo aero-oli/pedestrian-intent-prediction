@@ -269,7 +269,7 @@ class JAAD(Dataset):
             return None, None
         
         # Create a list of all the videos
-        idFull = self.original_annotations.keys()
+        idFull = list(self.original_annotations.keys())
 
         # Check the value of split and split the videos
         if(isinstance(validationSplit, int)):
@@ -281,10 +281,13 @@ class JAAD(Dataset):
 
         # How to ensure that each split has equal number of crossing and not-crossing samples??
         # How to ensure that each pedestrian has at least x number of samples (15/45/60) before **crossing**?        
-        validationIds = idFull[0:validationLength]
-        trainingIds = np.delete(idFull, np.arange(0, validationLength))
+        validationKeys = idFull[0:validationLength]
+        trainingKeys = list(np.delete(idFull, np.arange(0, validationLength)))
 
-        return None, None # TODO
+        trainingDataset = {key: value for key,value in self.graph_annotations.items() if key in trainingKeys}
+        validationDataset = {key: value for key,value in self.graph_annotations.items() if key in validationKeys}
+
+        return trainingDataset, validationDataset
 
 
 

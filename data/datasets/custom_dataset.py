@@ -218,7 +218,7 @@ class JAAD(Dataset):
                                                                    for i in range(node_vehicle_features.shape[0])
                                                                    for j in range(node_features.shape[0])]))])
 
-                nodes = np.zeros(shape=(1, node_vehicle_features.shape[1] + node_features.shape[1]))
+                nodes = np.zeros(shape=(1, 48))#node_vehicle_features.shape[1] + node_features.shape[1]))
                 if node_features.size != 0 and node_vehicle_features.size != 0:
                     nodes = np.vstack([
                         np.hstack([node_features,
@@ -230,8 +230,6 @@ class JAAD(Dataset):
                 elif node_features.size != 0 and node_vehicle_features.size == 0:
                     nodes = node_features
                     nodes = np.hstack([nodes, node_bbox])
-                else:
-                    nodes = np.array([])
 
                 graph_video.append(Data(x=torch.as_tensor(nodes),
                                         edge_index=torch.as_tensor(edge_index, dtype=torch.long),

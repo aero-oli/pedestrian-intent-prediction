@@ -48,21 +48,34 @@ def main(configuration):
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
+    epoch_range = 200
+
     print("Start training...")
-    model.train()
     for idx_data, data in enumerate(dataset):
         print("Trainging Video_{}, Number of frames:{}"
               .format("{}".format(idx_data).zfill(4), len(data)))
-        batch = Batch.from_data_list(data)
-        optimizer.zero_grad()
-        out = model(batch, device)
-        y = torch.cat([batch.y.cuda(), torch.ones(size=[out.shape[0]-batch.y.shape[0],
-                                                 batch.y.shape[1]], device=device)*2], dim=0)
-        print(y.dtype, out.dtype)
-        loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
-        loss.backward()
-        optimizer.step()
+        model.train()
+        for epoch in range(epoch_range):
+            if epoch % 50 == 0: print("Epoch: {}".format(epoch))
+            for idx_frame, frame in enumerate(data):
+                optimizer.zero_grad()
+                out = model(frame, device)
+                y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
+                                                         frame.y.shape[1]], device=device)*2], dim=0)
 
+                loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
+                loss.backward()
+                optimizer.step()
+        model.eval()
+        pred_idx = 10
+        pred = model(data[pred_idx], device)
+        y = torch.cat([data[pred_idx].y.cuda(),
+                       torch.ones(size=[pred.shape[0]-data[pred_idx].y.shape[0],
+                                        data[pred_idx].y.shape[1]], device=device)*2], dim=0)
+
+        correct = torch.sub(pred, y).numel() - torch.count_nonzero(torch.sub(pred, y))
+        accuracy = correct / torch.sub(pred, y).numel()
+        print('Accuracy: {:.4f}'.format(accuracy))
         break
 
     '''

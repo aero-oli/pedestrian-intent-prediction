@@ -260,3 +260,32 @@ class JAAD(Dataset):
             for idx, data in enumerate(video):
                 video[idx] = data.to(device)
             self.graph_annotations.update({video_id: video})
+
+
+    def split_dataset(self, validationSplit=0.2):
+
+        # Check if input is correct
+        if validationSplit == 0.0:
+            return None, None
+        
+        # Create a list of all the videos
+        idFull = self.original_annotations.keys()
+
+        # Check the value of split and split the videos
+        if(isinstance(validationSplit, int)):
+            assert validationSplit > 0, "[ERROR] Number of samples is negative!"
+            assert validationSplit < len(self.original_annotations), "[ERROR] Number of samples larger than the entire dataset!"
+            validationLength = validationSplit
+        else:
+            validationLength = int(validationSplit * len(self.original_annotations))
+
+        # How to ensure that each split has equal number of crossing and not-crossing samples??
+        # How to ensure that each pedestrian has at least x number of samples (15/45/60) before **crossing**?        
+        validationIds = idFull[0:validationLength]
+        trainingIds = np.delete(idFull, np.arange(0, validationLength))
+
+        return None, None # TODO
+
+
+
+

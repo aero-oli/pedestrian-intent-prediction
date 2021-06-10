@@ -30,20 +30,18 @@ class social_stgcn(torch.nn.Module):
         self.gcn = Sequential('x, edge_index',
                               [
                                   (GCNConv(in_channels=self.input_feat,
-                                           out_channels=self.input_feat,
-                                           improved=True,
-                                           normalize=True,
-                                           bias=True), 'x, edge_index -> x'),
-                                  (GCNConv(in_channels=self.input_feat,
-                                           out_channels=self.input_feat,
-                                           improved=True,
-                                           normalize=True,
-                                           bias=True), 'x, edge_index -> x'),
-                                  (GCNConv(in_channels=self.input_feat,
                                            out_channels=self.output_feat,
-                                           improved=True,
-                                           normalize=True,
-                                           bias=True), 'x, edge_index -> x'),
+                                           improved=True), 'x, edge_index -> x'),
+                                  # (GCNConv(in_channels=self.input_feat,
+                                  #          out_channels=self.input_feat,
+                                  #          improved=True,
+                                  #          normalize=True,
+                                  #          bias=True), 'x, edge_index -> x'),
+                                  # (GCNConv(in_channels=self.input_feat,
+                                  #          out_channels=self.output_feat,
+                                  #          improved=True,
+                                  #          normalize=True,
+                                  #          bias=True), 'x, edge_index -> x'),
                                   nn.ReLU(),
                                   (GConvLSTM(in_channels=output_feat, out_channels=24,
                                              K=K, normalization="sym", bias=True), 'x, edge_index -> h, _'),
@@ -77,4 +75,6 @@ class social_stgcn(torch.nn.Module):
                        torch.zeros(size=(x.size()[0],
                                          self.input_feat - x.size()[1]), device=device)], 1)
 
-        return torch.round(self.gcn(x, edge_index)) #F.log_softmax(x, dim=1)
+        # return F.log_softmax(x, dim=1)
+        return self.gcn(x, edge_index)
+        # return torch.round(self.gcn(x, edge_index))

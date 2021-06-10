@@ -71,7 +71,7 @@
             "output_feat": 48,
             "stgcn_kernel_size": 3,
             "num_nodes": 1,
-            "K": 1
+            "K": 15
         }
     }
 }

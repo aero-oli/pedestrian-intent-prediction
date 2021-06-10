@@ -3,6 +3,8 @@
 import torch
 import argparse
 import numpy as np
+import sys
+import time
 import collections
 from trainer import Trainer
 import model.loss as lossModule
@@ -39,42 +41,56 @@ def main(configuration):
     None
     """
 
+    epoch_range = 20
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
-
+    dataset_limit = len(dataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
-    epoch_range = 200
 
     print("Start training...")
-    for idx_data, data in enumerate(dataset):
+    for idx_data, data in zip(range(dataset_limit-2), dataset):
         print("Trainging Video_{}, Number of frames:{}"
               .format("{}".format(idx_data).zfill(4), len(data)))
         model.train()
         for epoch in range(epoch_range):
-            if epoch % 50 == 0: print("Epoch: {}".format(epoch))
-            for idx_frame, frame in enumerate(data):
+            sys.stdout.write("Epoch: {}/{}".format(epoch, epoch_range))
+            total_loss = 0
+            correct = 0
+            total = 0
+            for time_frame, frame in enumerate(data):
                 optimizer.zero_grad()
                 out = model(frame, device)
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
                                                          frame.y.shape[1]], device=device)*2], dim=0)
 
-                loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
+                # loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
+                loss = torch.mean((out - y) ** 2)
+                total_loss += loss
                 loss.backward()
                 optimizer.step()
+                out = torch.round(out)
+                correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
+                total = total + torch.sub(out, y).numel()
+            accuracy = correct / total
+            sys.stdout.write(", MSE: {}, Accuracy: {} \n".format(total_loss, accuracy))
         model.eval()
-        pred_idx = 10
-        pred = model(data[pred_idx], device)
-        y = torch.cat([data[pred_idx].y.cuda(),
-                       torch.ones(size=[pred.shape[0]-data[pred_idx].y.shape[0],
-                                        data[pred_idx].y.shape[1]], device=device)*2], dim=0)
+        correct = 0
+        total = 0
+        for frame in dataset[0]:
 
-        correct = torch.sub(pred, y).numel() - torch.count_nonzero(torch.sub(pred, y))
-        accuracy = correct / torch.sub(pred, y).numel()
+            pred = torch.round(model(frame, device))
+            y = torch.cat([frame.y.cuda(),
+                           torch.ones(size=[pred.shape[0]-frame.y.shape[0],
+                                            frame.y.shape[1]], device=device)*2], dim=0)
+
+            correct = correct + torch.sub(pred, y).numel() - torch.count_nonzero(torch.sub(pred, y))
+            total = total + torch.sub(pred, y).numel()
+        accuracy = correct / total
         print('Accuracy: {:.4f}'.format(accuracy))
         break
 

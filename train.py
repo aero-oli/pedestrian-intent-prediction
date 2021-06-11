@@ -41,7 +41,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 20
+    epoch_range = 1
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -49,7 +49,7 @@ def main(configuration):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
 
 
     print("Start training...")
@@ -58,7 +58,7 @@ def main(configuration):
               .format("{}".format(idx_data).zfill(4), len(data)))
         model.train()
         for epoch in range(epoch_range):
-            sys.stdout.write("Epoch: {}/{}".format(epoch, epoch_range))
+            sys.stdout.write("Epoch: {}/{}".format(epoch+1, epoch_range))
             total_loss = 0
             correct = 0
             total = 0
@@ -81,7 +81,7 @@ def main(configuration):
         model.eval()
         correct = 0
         total = 0
-        for frame in dataset[0]:
+        for frame in dataset[dataset_limit-1]:
 
             pred = torch.round(model(frame, device))
             y = torch.cat([frame.y.cuda(),
@@ -91,8 +91,7 @@ def main(configuration):
             correct = correct + torch.sub(pred, y).numel() - torch.count_nonzero(torch.sub(pred, y))
             total = total + torch.sub(pred, y).numel()
         accuracy = correct / total
-        print('Accuracy: {:.4f}'.format(accuracy))
-        break
+        print('Final accuracy for video_{}: {:.4f}'.format("{}".format(idx_data).zfill(4), accuracy))
 
     '''
     print("Validation...")

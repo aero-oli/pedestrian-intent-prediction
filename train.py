@@ -45,20 +45,20 @@ def main(configuration):
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
-    dataset_limit = len(dataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=5e-4)
 
+    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
-    for idx_data, data in zip(range(dataset_limit-2), dataset):
-        print("Trainging Video_{}, Number of frames:{}"
-              .format("{}".format(idx_data).zfill(4), len(data)))
+    for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
+        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
+              .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         model.train()
         for epoch in range(epoch_range):
-            sys.stdout.write("Epoch: {}/{}".format(epoch+1, epoch_range))
+            if epoch_range > 1: sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
             total_loss = 0
             correct = 0
             total = 0
@@ -68,7 +68,6 @@ def main(configuration):
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
                                                          frame.y.shape[1]], device=device)*2], dim=0)
 
-                # loss = lossModule.binary_cross_entropy_loss(out, y.cuda())
                 loss = torch.mean((out - y) ** 2)
                 total_loss += loss
                 loss.backward()
@@ -77,21 +76,39 @@ def main(configuration):
                 correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 total = total + torch.sub(out, y).numel()
             accuracy = correct / total
-            sys.stdout.write(", MSE: {}, Accuracy: {} \n".format(total_loss, accuracy))
-        model.eval()
-        correct = 0
-        total = 0
-        for frame in dataset[dataset_limit-1]:
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}".format(total_loss, accuracy))
 
+    model.eval()
+    correct_each_prediction = [0, 0, 0]
+    total_each_prediction = [0, 0, 0]
+    print("Calculating final accuracy...")
+    for idx_video, (_, video) in enumerate(validationDataset.items()):
+        sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
+        sys.stdout.flush()
+        for idx_frame, frame in enumerate(video):
+            print("{}/{}".format(idx_frame, len(video)))
             pred = torch.round(model(frame, device))
             y = torch.cat([frame.y.cuda(),
                            torch.ones(size=[pred.shape[0]-frame.y.shape[0],
                                             frame.y.shape[1]], device=device)*2], dim=0)
+            comparison = torch.sub(pred, y)
+            correct_each_prediction = [correct_each_prediction[it] + comparison[:, it].numel()
+                                       for it in range(len(correct_each_prediction))]
 
-            correct = correct + torch.sub(pred, y).numel() - torch.count_nonzero(torch.sub(pred, y))
-            total = total + torch.sub(pred, y).numel()
-        accuracy = correct / total
-        print('Final accuracy for video_{}: {:.4f}'.format("{}".format(idx_data).zfill(4), accuracy))
+            total_each_prediction = [total_each_prediction[it] + comparison[:, it].numel() -
+                                     torch.count_nonzero(comparison[:, it])
+                                     for it in range(len(total_each_prediction))]
+
+    total = sum(total_each_prediction)
+    correct = sum(correct_each_prediction)
+    accuracy = correct / total
+    accuracy_each_prediction = [correct_each_prediction[it] / total_each_prediction[it]
+                                for it in range(len(total_each_prediction))]
+
+    print('Final accuracy frames: {:.4f}'.format(accuracy))
+    print('Final accuracy for specific frame prediction: \n '
+          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
+          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
 
     '''
     print("Validation...")

@@ -284,8 +284,8 @@ class JAAD(Dataset):
         validationKeys = idFull[0:validationLength]
         trainingKeys = list(np.delete(idFull, np.arange(0, validationLength)))
 
-        trainingDataset = {key: value for key,value in self.graph_annotations.items() if key in trainingKeys}
-        validationDataset = {key: value for key,value in self.graph_annotations.items() if key in validationKeys}
+        trainingDataset = {key: value for key, value in self.graph_annotations.items() if key in trainingKeys}
+        validationDataset = {key: value for key, value in self.graph_annotations.items() if key in validationKeys}
 
         return trainingDataset, validationDataset
 

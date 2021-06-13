@@ -30,6 +30,12 @@ class social_stgcn(torch.nn.Module):
         self.gcn = Sequential('x, edge_index',
                               [
                                   (GCNConv(in_channels=self.input_feat,
+                                           out_channels=self.input_feat,
+                                           improved=True), 'x, edge_index -> x'),
+                                  (GCNConv(in_channels=self.input_feat,
+                                           out_channels=self.input_feat,
+                                           improved=True), 'x, edge_index -> x'),
+                                  (GCNConv(in_channels=self.input_feat,
                                            out_channels=self.output_feat,
                                            improved=True), 'x, edge_index -> x'),
                                   # (GCNConv(in_channels=self.input_feat,
@@ -43,8 +49,14 @@ class social_stgcn(torch.nn.Module):
                                   #          normalize=True,
                                   #          bias=True), 'x, edge_index -> x'),
                                   nn.ReLU(),
-                                  (GConvLSTM(in_channels=output_feat, out_channels=24,
+                                  (GConvLSTM(in_channels=output_feat, out_channels=output_feat,
                                              K=K, normalization="sym", bias=True), 'x, edge_index -> h, _'),
+
+                                  (GConvLSTM(in_channels=output_feat, out_channels=output_feat,
+                                             K=K, normalization="sym", bias=True), 'h, edge_index -> h, _'),
+
+                                  (GConvLSTM(in_channels=output_feat, out_channels=24,
+                                             K=K, normalization="sym", bias=True), 'h, edge_index -> h, _'),
                                   (nn.ReLU(), "h -> h"),
                                   # nn.Dropout(inplace=True),
                                   # (lambda x1, x2: [x1, x2], 'x1, x2 -> xs'),

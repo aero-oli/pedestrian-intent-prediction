@@ -4,7 +4,7 @@ import torch
 import pickle
 import numpy as np
 from torch.utils.data import Dataset
-from torch_geometric.data import Dataset, Data, download_url
+from torch_geometric.data import Dataset, Data, download_url, Batch
 import os.path as osp
 
 
@@ -218,7 +218,7 @@ class JAAD(Dataset):
                                                                    for i in range(node_vehicle_features.shape[0])
                                                                    for j in range(node_features.shape[0])]))])
 
-                nodes = np.zeros(shape=(1, node_vehicle_features.shape[1] + node_features.shape[1]))
+                nodes = np.zeros(shape=(1, 48))#node_vehicle_features.shape[1] + node_features.shape[1]))
                 if node_features.size != 0 and node_vehicle_features.size != 0:
                     nodes = np.vstack([
                         np.hstack([node_features,
@@ -230,8 +230,6 @@ class JAAD(Dataset):
                 elif node_features.size != 0 and node_vehicle_features.size == 0:
                     nodes = node_features
                     nodes = np.hstack([nodes, node_bbox])
-                else:
-                    nodes = np.array([])
 
                 graph_video.append(Data(x=torch.as_tensor(nodes),
                                         edge_index=torch.as_tensor(edge_index, dtype=torch.long),
@@ -262,3 +260,35 @@ class JAAD(Dataset):
             for idx, data in enumerate(video):
                 video[idx] = data.to(device)
             self.graph_annotations.update({video_id: video})
+
+
+    def split_dataset(self, validationSplit=0.2):
+
+        # Check if input is correct
+        if validationSplit == 0.0:
+            return None, None
+        
+        # Create a list of all the videos
+        idFull = list(self.original_annotations.keys())
+
+        # Check the value of split and split the videos
+        if(isinstance(validationSplit, int)):
+            assert validationSplit > 0, "[ERROR] Number of samples is negative!"
+            assert validationSplit < len(self.original_annotations), "[ERROR] Number of samples larger than the entire dataset!"
+            validationLength = validationSplit
+        else:
+            validationLength = int(validationSplit * len(self.original_annotations))
+
+        # How to ensure that each split has equal number of crossing and not-crossing samples??
+        # How to ensure that each pedestrian has at least x number of samples (15/45/60) before **crossing**?        
+        validationKeys = idFull[0:validationLength]
+        trainingKeys = list(np.delete(idFull, np.arange(0, validationLength)))
+
+        trainingDataset = {key: value for key, value in self.graph_annotations.items() if key in trainingKeys}
+        validationDataset = {key: value for key, value in self.graph_annotations.items() if key in validationKeys}
+
+        return trainingDataset, validationDataset
+
+
+
+

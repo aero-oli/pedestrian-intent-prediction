@@ -1,6 +1,6 @@
 # Implementation of loss function
 
-import torch.nn.functional as function
+import torch.nn.functional as F
 
 def negative_likelihood_loss(output, target):
     """
@@ -18,7 +18,7 @@ def negative_likelihood_loss(output, target):
     loss    : float
               Negative Likelihood Loss
     """
-    return function.nll_loss(output, target)
+    return F.nll_loss(output, target)
 
 
 
@@ -38,4 +38,4 @@ def binary_cross_entropy_loss(output, target):
     loss    : float
               Binary Cross Entropy Loss
     """
-    return function.binary_cross_entropy(output, target)
+    return F.binary_cross_entropy_with_logits(output, target)

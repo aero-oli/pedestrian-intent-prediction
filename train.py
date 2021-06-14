@@ -3,6 +3,8 @@
 import torch
 import argparse
 import numpy as np
+import sys
+import time
 import collections
 from trainer import Trainer
 import model.loss as lossModule
@@ -13,14 +15,16 @@ from parse_config import ConfigParser
 # import model.model as architectureModule
 import model.social_stgcnn as architectureModule
 import data_loader.data_loaders as dataModule
-from torch_geometric.data import Data, DataLoader
+from torch_geometric.data import Data, Batch, DenseDataLoader, DataLoader
 import data.datasets.custom_dataset as customDataset
 
 # Fix random seeds for reproducibility
 SEED = 123
 torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
+torch.set_default_dtype(torch.double)
 torch.backends.cudnn.benchmark = False
+torch.autograd.set_detect_anomaly(True)
 np.random.seed(SEED)
 
 def main(configuration):
@@ -37,34 +41,74 @@ def main(configuration):
     None
     """
 
-    # logger = configuration.get_logger("train")
-    # Setup Data loader Instances
+    epoch_range = 1
     print("Getting graph dataset... ")
 
-    # dataLoader = configuration.initialize_object("dataLoader", dataModule)
-
     dataset = configuration.initialize_object("dataset", customDataset)
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=5e-4)
 
-    loader = DataLoader(dataset, batch_size=1, shuffle=False)
-    # print(dataset)
+    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+
     print("Start training...")
+    for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
+        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
+              .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
+        model.train()
+        for epoch in range(epoch_range):
+            if epoch_range > 1: sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
+            total_loss = 0
+            correct = 0
+            total = 0
+            for time_frame, frame in enumerate(data):
+                optimizer.zero_grad()
+                out = model(frame, device)
+                y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
+                                                         frame.y.shape[1]], device=device)*2], dim=0)
 
-    for idx_video, video in enumerate(loader):
-        print("Trainging Video_{}, Number of frames:{}"
-              .format("{}".format(idx_video).zfill(4), len(video)))
+                loss = torch.mean((out - y) ** 2)
+                total_loss += loss
+                loss.backward()
+                optimizer.step()
+                out = torch.round(out)
+                correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
+                total = total + torch.sub(out, y).numel()
+            accuracy = correct / total
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}".format(total_loss, accuracy))
 
+    model.eval()
+    correct_each_prediction = [0, 0, 0]
+    total_each_prediction = [0, 0, 0]
+    print("Calculating final accuracy...")
+    for idx_video, (_, video) in enumerate(validationDataset.items()):
+        sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
+        sys.stdout.flush()
         for idx_frame, frame in enumerate(video):
-            optimizer.zero_grad()
-            for id, a in frame:
-                print(id, a)
-            out = model(frame)
-            # loss = F.
+            print("{}/{}".format(idx_frame, len(video)))
+            pred = torch.round(model(frame, device))
+            y = torch.cat([frame.y.cuda(),
+                           torch.ones(size=[pred.shape[0]-frame.y.shape[0],
+                                            frame.y.shape[1]], device=device)*2], dim=0)
+            comparison = torch.sub(pred, y)
+            correct_each_prediction = [correct_each_prediction[it] + comparison[:, it].numel()
+                                       for it in range(len(correct_each_prediction))]
 
+            total_each_prediction = [total_each_prediction[it] + comparison[:, it].numel() -
+                                     torch.count_nonzero(comparison[:, it])
+                                     for it in range(len(total_each_prediction))]
+
+    total = sum(total_each_prediction)
+    correct = sum(correct_each_prediction)
+    accuracy = correct / total
+    accuracy_each_prediction = [correct_each_prediction[it] / total_each_prediction[it]
+                                for it in range(len(total_each_prediction))]
+
+    print('Final accuracy frames: {:.4f}'.format(accuracy))
+    print('Final accuracy for specific frame prediction: \n '
+          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
+          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
 
     '''
     print("Validation...")

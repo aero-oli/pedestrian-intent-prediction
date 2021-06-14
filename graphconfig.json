@@ -66,12 +66,12 @@
     "model": {
         "type": "social_stgcn",
         "args": {
-            "input_feat": 10,
-            "hidden_channels": 5,
-            "output_feat": 5,
+            "input_feat": 50,
+            "hidden_channels": 4,
+            "output_feat": 48,
             "stgcn_kernel_size": 3,
             "num_nodes": 1,
-            "K": 1
+            "K": 15
         }
     }
 }

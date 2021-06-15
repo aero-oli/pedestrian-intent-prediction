@@ -4,7 +4,6 @@ import torch
 import argparse
 import numpy as np
 import sys
-import time
 import collections
 from trainer import Trainer
 import model.loss as lossModule
@@ -12,10 +11,7 @@ from utils import prepare_device
 import model.metric as metricModule
 import torch.nn.functional as F
 from parse_config import ConfigParser
-# import model.model as architectureModule
 import model.social_stgcnn as architectureModule
-import data_loader.data_loaders as dataModule
-from torch_geometric.data import Data, Batch, DenseDataLoader, DataLoader
 import data.datasets.custom_dataset as customDataset
 
 # Fix random seeds for reproducibility
@@ -48,14 +44,14 @@ def main(configuration):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)# , weight_decay=5e-4)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
-              .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
+                         .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         model.train()
         for epoch in range(epoch_range):
             if epoch_range > 1: sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
@@ -66,7 +62,7 @@ def main(configuration):
                 optimizer.zero_grad()
                 out = model(frame, device)
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
-                                                         frame.y.shape[1]], device=device)*2], dim=0)
+                                                                frame.y.shape[1]], device=device)*2], dim=0)
 
                 loss = torch.mean((out - y) ** 2)
                 total_loss += loss
@@ -86,29 +82,28 @@ def main(configuration):
         sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
         sys.stdout.flush()
         for idx_frame, frame in enumerate(video):
-            print("{}/{}".format(idx_frame, len(video)))
             pred = torch.round(model(frame, device))
             y = torch.cat([frame.y.cuda(),
                            torch.ones(size=[pred.shape[0]-frame.y.shape[0],
                                             frame.y.shape[1]], device=device)*2], dim=0)
             comparison = torch.sub(pred, y)
-            correct_each_prediction = [correct_each_prediction[it] + comparison[:, it].numel()
-                                       for it in range(len(correct_each_prediction))]
+            correct_each_prediction = [pred + comparison[:, it].numel() -
+                                       torch.count_nonzero(comparison[:, it])
+                                       for it, pred in enumerate(correct_each_prediction)]
 
-            total_each_prediction = [total_each_prediction[it] + comparison[:, it].numel() -
-                                     torch.count_nonzero(comparison[:, it])
-                                     for it in range(len(total_each_prediction))]
+            total_each_prediction = [pred + comparison[:, it].numel()
+                                     for it, pred in enumerate(total_each_prediction)]
 
     total = sum(total_each_prediction)
     correct = sum(correct_each_prediction)
     accuracy = correct / total
-    accuracy_each_prediction = [correct_each_prediction[it] / total_each_prediction[it]
-                                for it in range(len(total_each_prediction))]
+    accuracy_each_prediction = [correct_each_prediction[it] / tot
+                                for it, tot in enumerate(total_each_prediction)]
 
     print('Final accuracy frames: {:.4f}'.format(accuracy))
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
+          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
 
     '''
     print("Validation...")

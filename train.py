@@ -44,7 +44,7 @@ def main(configuration):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)# , weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)# , weight_decay=5e-4)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
@@ -60,7 +60,7 @@ def main(configuration):
             total = 0
             for time_frame, frame in enumerate(data):
                 optimizer.zero_grad()
-                out = model(frame, device)
+                out = model(frame.cuda(), device)
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
                                                                 frame.y.shape[1]], device=device)*2], dim=0)
 

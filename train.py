@@ -39,7 +39,7 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "checkpoint-video{}-epoch{}.pth"
+    filename = "checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -79,8 +79,8 @@ def main(configuration):
             #if epoch % savePeriod == 0:
             #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
 
-        torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
-        
+        torch.save(model.state_dict(), filename)
+
     model.eval()
     correct_each_prediction = [0, 0, 0]
     total_each_prediction = [0, 0, 0]

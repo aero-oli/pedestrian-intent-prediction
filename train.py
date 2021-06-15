@@ -87,23 +87,23 @@ def main(configuration):
                            torch.ones(size=[pred.shape[0]-frame.y.shape[0],
                                             frame.y.shape[1]], device=device)*2], dim=0)
             comparison = torch.sub(pred, y)
-            correct_each_prediction = [correct_each_prediction[it] + comparison[:, it].numel()
-                                       for it in range(len(correct_each_prediction))]
+            correct_each_prediction = [pred + comparison[:, it].numel() -
+                                       torch.count_nonzero(comparison[:, it])
+                                       for it, pred in enumerate(correct_each_prediction)]
 
-            total_each_prediction = [total_each_prediction[it] + comparison[:, it].numel() -
-                                     torch.count_nonzero(comparison[:, it])
-                                     for it in range(len(total_each_prediction))]
+            total_each_prediction = [pred + comparison[:, it].numel()
+                                     for it, pred in enumerate(total_each_prediction)]
 
     total = sum(total_each_prediction)
     correct = sum(correct_each_prediction)
     accuracy = correct / total
-    accuracy_each_prediction = [correct_each_prediction[it] / total_each_prediction[it]
-                                for it in range(len(total_each_prediction))]
+    accuracy_each_prediction = [correct_each_prediction[it] / tot
+                                for it, tot in enumerate(total_each_prediction)]
 
     print('Final accuracy frames: {:.4f}'.format(accuracy))
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
+          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
 
     '''
     print("Validation...")

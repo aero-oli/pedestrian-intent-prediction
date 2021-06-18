@@ -25,6 +25,7 @@ class social_stgcn(torch.nn.Module):
                                   (GCNConv(in_channels=self.input_feat,
                                            out_channels=self.Conv_outputs[0],
                                            improved=True), 'x, edge_index -> x'),
+                                  nn.ReLU(),
                                   (GCNConv(in_channels=self.Conv_outputs[0],
                                            out_channels=self.Conv_outputs[1],
                                            improved=True), 'x, edge_index -> x'),
@@ -42,10 +43,12 @@ class social_stgcn(torch.nn.Module):
                                   (GConvLSTM(in_channels=self.Conv_outputs[1],
                                              out_channels=self.Conv_outputs[1],
                                              K=K, normalization="sym", bias=True), 'x, edge_index -> h, _'),
+                                  nn.ReLU(), "h -> h",
 
                                   (GConvLSTM(in_channels=self.Conv_outputs[1],
                                              out_channels=self.Conv_outputs[1],
                                              K=K, normalization="sym", bias=True), 'h, edge_index -> h, _'),
+                                  nn.ReLU(), "h -> h",
 
                                   (GConvLSTM(in_channels=self.Conv_outputs[1],
                                              out_channels=self.LSTM_output[0],
@@ -62,7 +65,7 @@ class social_stgcn(torch.nn.Module):
                                   # (GCLSTM(in_channels=self.LSTM_output[1],
                                   #         out_channels=self.LSTM_output[2],
                                   #         K=K, normalization="sym", bias=True), 'h, edge_index, c -> h, _'),
-                                  (nn.ReLU(), "h -> h"),
+                                  (nn.ReLU(), "c -> c"),
                                   (nn.Linear(in_features=self.LSTM_output[0],
                                              out_features=self.linear_output), "c -> x")])
 

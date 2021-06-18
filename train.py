@@ -39,7 +39,7 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "checkpoint.pth"
+    filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -84,7 +84,7 @@ def main(configuration):
     model.eval()
     correct_each_prediction = [0, 0, 0]
     total_each_prediction = [0, 0, 0]
-    print("Calculating final accuracy...")
+    print("\nCalculating final accuracy...")
     for idx_video, (_, video) in enumerate(validationDataset.items()):
         sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
         sys.stdout.flush()
@@ -110,7 +110,7 @@ def main(configuration):
     print('Final accuracy frames: {:.4f}'.format(accuracy))
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
+          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
 
     '''
     print("Validation...")

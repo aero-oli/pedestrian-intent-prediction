@@ -57,5 +57,10 @@ class social_stgcn(torch.nn.Module):
                        torch.zeros(size=(x.size()[0],
                                          self.input_feat - x.size()[1]), device=device)], 1)
         h = torch.zeros(size=edge_index.shape)
-        # return F.log_softmax(x, dim=1)
+
         return self.gcn(x, edge_index, h)
+
+
+Final accuracy frames: 0.9849
+Final accuracy for specific frame prediction:
+ 45 frames: 0.9841, 30 frames: 0.9849, 15 frames: 0.9855

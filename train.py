@@ -39,7 +39,7 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 2/checkpoint.pth"
+    filename = "saved models/Model 3/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -62,14 +62,16 @@ def main(configuration):
             total = 0
             for time_frame, frame in enumerate(data):
                 optimizer.zero_grad()
+
                 out = model(frame.cuda(), device)
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
                                                                 frame.y.shape[1]], device=device)*2], dim=0)
-
                 loss = torch.mean((out - y) ** 2)
-                total_loss += loss
+
                 loss.backward()
                 optimizer.step()
+
+                total_loss += loss
                 out = torch.round(out)
                 correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 total = total + torch.sub(out, y).numel()

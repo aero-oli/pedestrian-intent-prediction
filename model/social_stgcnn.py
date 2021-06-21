@@ -28,54 +28,30 @@ class social_stgcn(torch.nn.Module):
                             out_channels=self.Conv_outputs[1],
                             improved=True)
 
-        self.gclstm1 = GConvLSTM(in_channels=self.Conv_outputs[1],
-                                 out_channels=self.Conv_outputs[1],
-                                 K=K, normalization="sym", bias=True)
-        self.gclstm2 = GConvLSTM(in_channels=self.Conv_outputs[1],
-                                 out_channels=self.Conv_outputs[1],
-                                 K=K, normalization="sym", bias=True)
-        self.gclstm3 = GConvLSTM(in_channels=self.Conv_outputs[1],
-                                 out_channels=self.LSTM_output[0],
-                                 K=K, normalization="sym", bias=True)
+        # self.gclstm1 = GConvLSTM(in_channels=self.Conv_outputs[1],
+        #                          out_channels=self.Conv_outputs[1],
+        #                          K=K, normalization="sym", bias=True)
+        # self.gclstm2 = GConvLSTM(in_channels=self.Conv_outputs[1],
+        #                          out_channels=self.Conv_outputs[1],
+        #                          K=K, normalization="sym", bias=True)
+        # self.gclstm3 = GConvLSTM(in_channels=self.Conv_outputs[1],
+        #                          out_channels=self.LSTM_output[0],
+        #                          K=K, normalization="sym", bias=True)
+
+        self.gclstm1 = GCLSTM(in_channels=self.Conv_outputs[1],
+                              out_channels=self.Conv_outputs[1],
+                              K=K, normalization="sym", bias=True)
+        self.gclstm2 = GCLSTM(in_channels=self.Conv_outputs[1],
+                              out_channels=self.Conv_outputs[1],
+                              K=K, normalization="sym", bias=True)
+        self.gclstm3 = GCLSTM(in_channels=self.Conv_outputs[1],
+                              out_channels=self.LSTM_output[0],
+                              K=K, normalization="sym", bias=True)
 
         self.no_lstm = 3
 
         self.linear = nn.Linear(in_features=self.LSTM_output[0],
                                 out_features=self.linear_output)
-
-        self.gcn = Sequential('x, edge_index, h_none', [
-                                  (GCNConv(in_channels=self.input_feat,
-                                           out_channels=self.Conv_outputs[0],
-                                           improved=True), 'x, edge_index -> x'),
-                                  (nn.ReLU(), 'x -> x'),
-                                  (GCNConv(in_channels=self.Conv_outputs[0],
-                                           out_channels=self.Conv_outputs[1],
-                                           improved=True), 'x, edge_index -> x'),
-                                  (nn.ReLU(), 'x -> x'),
-                                  (GConvLSTM(in_channels=self.Conv_outputs[1],
-                                             out_channels=self.Conv_outputs[1],
-                                             K=K, normalization="sym", bias=True), 'x, edge_index -> h, c'),
-                                  (GConvLSTM(in_channels=self.Conv_outputs[1],
-                                             out_channels=self.Conv_outputs[1],
-                                             K=K, normalization="sym", bias=True), 'h, edge_index, h_none, c -> h, c'),
-                                  (GConvLSTM(in_channels=self.Conv_outputs[1],
-                                             out_channels=self.LSTM_output[0],
-                                             K=K, normalization="sym", bias=True), 'h, edge_index, h_none, c-> h, c'),
-                                    # TO BE TESTED LATER
-                                  # (GCLSTM(in_channels=self.Conv_outputs[1],
-                                  #         out_channels=self.LSTM_output[0],
-                                  #         K=K, normalization="sym", bias=True), 'x, edge_index -> h, c'),
-                                  #
-                                  # (GCLSTM(in_channels=self.LSTM_output[0],
-                                  #         out_channels=self.LSTM_output[1],
-                                  #         K=K, normalization="sym", bias=True), 'x, edge_index, h, c -> h, c'),
-                                  #
-                                  # (GCLSTM(in_channels=self.LSTM_output[1],
-                                  #         out_channels=self.LSTM_output[2],
-                                  #         K=K, normalization="sym", bias=True), 'h, edge_index, c -> h, _'),
-                                  (nn.ReLU(), "h -> h"),
-                                  (nn.Linear(in_features=self.LSTM_output[0],
-                                             out_features=self.linear_output), "h -> x")])
 
 
     def forward(self, data, device):

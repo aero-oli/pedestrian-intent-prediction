@@ -79,8 +79,10 @@ def main(configuration):
             #if epoch % savePeriod == 0:
             #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
 
+        print("Saving Model....")
         torch.save(model.state_dict(), filename)
 
+    """
     model.eval()
     correct_each_prediction = [0, 0, 0]
     total_each_prediction = [0, 0, 0]
@@ -111,7 +113,8 @@ def main(configuration):
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
           .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
-
+    """
+    
     '''
     print("Validation...")
     validationDataLoader = dataLoader.split_validation()

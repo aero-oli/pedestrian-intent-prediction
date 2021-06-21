@@ -1,13 +1,17 @@
 # Implementation of Testing
 
 import torch
+import sys
 import argparse
 from tqdm import tqdm
 import model.loss as lossModule
 import model.metric as metricModule
 from parse_config import ConfigParser
-import model.model as architectureModule
 import data_loader.data_loaders as dataModule
+import model.social_stgcnn as architectureModule
+import data.datasets.custom_dataset as customDataset
+
+torch.set_default_dtype(torch.double)
 
 def main(configuration):
     """
@@ -21,6 +25,55 @@ def main(configuration):
     Returns
     -------
     None
+    """
+    epoch_range = 1
+    savePeriod = 1
+    filename = "saved models/Model 2/checkpoint.pth"
+    print("Getting graph dataset... ")
+
+    dataset = configuration.initialize_object("dataset", customDataset)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = configuration.initialize_object("model", architectureModule).to(device)
+    dataset.to_device(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)# , weight_decay=5e-4)
+
+    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+
+    print("Loading Model {}...".format(filename))
+    model.load_state_dict(torch.load(filename))
+
+    print("Start testing...")
+    model.eval()
+    correct_each_prediction = [0, 0, 0]
+    total_each_prediction = [0, 0, 0]
+    print("Calculating final accuracy...")
+    for idx_video, (_, video) in enumerate(validationDataset.items()):
+        sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
+        sys.stdout.flush()
+        for idx_frame, frame in enumerate(video):
+            pred = torch.round(model(frame, device))
+            y = torch.cat([frame.y.cuda(),
+                           torch.ones(size=[pred.shape[0]-frame.y.shape[0],
+                                            frame.y.shape[1]], device=device)*2], dim=0)
+            comparison = torch.sub(pred, y)
+            correct_each_prediction = [pred + comparison[:, it].numel() -
+                                       torch.count_nonzero(comparison[:, it])
+                                       for it, pred in enumerate(correct_each_prediction)]
+
+            total_each_prediction = [pred + comparison[:, it].numel()
+                                     for it, pred in enumerate(total_each_prediction)]
+
+    total = sum(total_each_prediction)
+    correct = sum(correct_each_prediction)
+    accuracy = correct / total
+    accuracy_each_prediction = [correct_each_prediction[it] / tot
+                                for it, tot in enumerate(total_each_prediction)]
+
+    print('Final accuracy frames: {:.4f}'.format(accuracy))
+    print('Final accuracy for specific frame prediction: \n '
+          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
+          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
+
     """
     logger = configuration.get_logger("test")
 
@@ -77,6 +130,7 @@ def main(configuration):
     log = {"loss": totalLoss / numberOfSamples}
     log.update({individualMetric.__name__: totalMetrics[i].item() / numberOfSamples for i, individualMetric in enumerate(metrics)})
     logger.info(log)
+    """
 
 
 if __name__ == "__main__":

@@ -28,25 +28,25 @@ class social_stgcn(torch.nn.Module):
                             out_channels=self.Conv_outputs[1],
                             improved=True)
 
-        # self.gclstm1 = GConvLSTM(in_channels=self.Conv_outputs[1],
-        #                          out_channels=self.Conv_outputs[1],
-        #                          K=K, normalization="sym", bias=True)
-        # self.gclstm2 = GConvLSTM(in_channels=self.Conv_outputs[1],
-        #                          out_channels=self.Conv_outputs[1],
-        #                          K=K, normalization="sym", bias=True)
-        # self.gclstm3 = GConvLSTM(in_channels=self.Conv_outputs[1],
-        #                          out_channels=self.LSTM_output[0],
-        #                          K=K, normalization="sym", bias=True)
+        self.gclstm1 = GConvLSTM(in_channels=self.Conv_outputs[1],
+                                 out_channels=self.Conv_outputs[1],
+                                 K=K, normalization="sym", bias=True)
+        self.gclstm2 = GConvLSTM(in_channels=self.Conv_outputs[1],
+                                 out_channels=self.Conv_outputs[1],
+                                 K=K, normalization="sym", bias=True)
+        self.gclstm3 = GConvLSTM(in_channels=self.Conv_outputs[1],
+                                 out_channels=self.LSTM_output[0],
+                                 K=K, normalization="sym", bias=True)
 
-        self.gclstm1 = GCLSTM(in_channels=self.Conv_outputs[1],
-                              out_channels=self.Conv_outputs[1],
-                              K=K, normalization="sym", bias=True)
-        self.gclstm2 = GCLSTM(in_channels=self.Conv_outputs[1],
-                              out_channels=self.Conv_outputs[1],
-                              K=K, normalization="sym", bias=True)
-        self.gclstm3 = GCLSTM(in_channels=self.Conv_outputs[1],
-                              out_channels=self.LSTM_output[0],
-                              K=K, normalization="sym", bias=True)
+        # self.gclstm1 = GCLSTM(in_channels=self.Conv_outputs[1],
+        #                       out_channels=self.Conv_outputs[1],
+        #                       K=K, normalization="sym", bias=True)
+        # self.gclstm2 = GCLSTM(in_channels=self.Conv_outputs[1],
+        #                       out_channels=self.Conv_outputs[1],
+        #                       K=K, normalization="sym", bias=True)
+        # self.gclstm3 = GCLSTM(in_channels=self.Conv_outputs[1],
+        #                       out_channels=self.LSTM_output[0],
+        #                       K=K, normalization="sym", bias=True)
 
         self.no_lstm = 3
 

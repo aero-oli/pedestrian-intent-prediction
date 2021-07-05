@@ -52,6 +52,8 @@ def main(configuration):
 
     print("Start training...")
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
+        # print(dataset.get_video_c_nc(video_name))
+        # print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
                          .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         model.train()
@@ -60,23 +62,31 @@ def main(configuration):
             total_loss = 0
             correct = 0
             total = 0
+            video_pedestrians = 0
             for time_frame, frame in enumerate(data):
+                pedestrians = frame.classification.count(1)
+                video_pedestrians += pedestrians
                 optimizer.zero_grad()
-
                 out = model(frame.cuda(), device)
-                y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
-                                                                frame.y.shape[1]], device=device)*2], dim=0)
+                y = torch.cat([frame.y.cuda(),
+                               torch.ones(size=[out.shape[0]-frame.y.shape[0],
+                                                frame.y.shape[1]], device=device)*2], dim=0)
                 loss = torch.mean((out - y) ** 2)
 
                 loss.backward()
                 optimizer.step()
 
                 total_loss += loss
-                out = torch.round(out)
+
+                out = torch.round(out[[i for i in range(pedestrians)]])
+                y = y[[i for i in range(pedestrians)]]
+                # print("!")
+                # print(frame.classification)
+                # print(y[[i for i in range(pedestrians)]], pedestrians)
                 correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 total = total + torch.sub(out, y).numel()
             accuracy = correct / total
-            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}".format(total_loss, accuracy))
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
 
             #if epoch % savePeriod == 0:
             #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))

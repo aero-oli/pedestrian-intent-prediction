@@ -154,7 +154,8 @@ class JAAD(Dataset):
         with open(original_annotations, "rb") as annotationsFile:
             self.original_annotations = pickle.load(annotationsFile)
         self.graph_annotations = {}
-
+        self.dataset_c_nc = {}
+        self.dataset_classification_no = {}
         super(JAAD, self).__init__(root, transform, pre_transform)
 
     @property
@@ -169,9 +170,12 @@ class JAAD(Dataset):
 
         for video_id, video_value in self.original_annotations.items():
             graph_video = []
+            video_c_nc = [0, 0]#[Crossing, Not crossing]
+            video_classification_no = [0, 0]#[Pedestrians, vehicles]
             width = video_value['width']
             height = video_value['height']
             for frame_id, frame_value in video_value['frames'].items():
+                frame_classification = []# 1 = pedestrian, 2 = vehicle
                 node_bbox = np.empty(shape=[1, 4])
                 node_position = np.empty(shape=[1, 2])
                 node_appearance = np.empty(shape=[1, 25])
@@ -188,24 +192,34 @@ class JAAD(Dataset):
                         node_attributes = np.vstack([node_attributes, np.array(
                             [int(node_attributes_value) for node_attributes_id, node_attributes_value in
                              object_value['attributes'].items() if not node_attributes_id == 'old_id'])])
-
                         node_appearance = np.vstack([node_appearance, np.array(
                             [int(object_appearance_value) for object_appearance_id, object_appearance_value in
                              object_value['appearance'].items()])])
 
+                        if object_value['behavior']['cross'] == 1:
+                            video_c_nc[0] += 1
+                        elif object_value['behavior']['cross'] == 0:
+                            video_c_nc[1] += 1
 
-
+                        frame_classification.append(1)
+                        video_classification_no[0] += 1
                         node_ground_truth = np.vstack([node_ground_truth, np.array(
                             [x if not x is None else 2 for x in object_value['ground_truth']])])
+
                     elif 'vehicle_type' in object_value.keys():
                         node_vehicle_features = np.vstack([node_vehicle_features, np.array(
                             [int(object_value.get('vehicle_type'))])])
+
+                        frame_classification.append(2)
+                        video_classification_no[1] += 1
+
                     node_position = np.vstack([node_position, [object_value['bbox'][2]-object_value['bbox'][0],
                                                                object_value['bbox'][3]-object_value['bbox'][1]]])
                     node_bbox = np.vstack([node_bbox, object_value['bbox']])
 
                 node_features = np.delete(np.hstack([node_appearance, node_attributes, node_behavior]), 0, 0)
                 if node_features.shape[0] > 1:
+
                     edge_index = np.hstack([edge_index,
                                             [[[j, i], [i, j]] for i in range(node_features.shape[0]) for j in
                                              range(i + 1) if i != j][0]])
@@ -230,22 +244,24 @@ class JAAD(Dataset):
                 elif node_features.size != 0 and node_vehicle_features.size == 0:
                     nodes = node_features
                     nodes = np.hstack([nodes, node_bbox])
-
                 graph_video.append(Data(x=torch.as_tensor(nodes),
                                         edge_index=torch.as_tensor(edge_index, dtype=torch.long),
                                         y=torch.as_tensor(np.delete(node_ground_truth, 0, 0)),
                                         pos=torch.as_tensor(np.delete(node_position, 0, 0)),
+                                        classification=frame_classification,
                                         width=torch.as_tensor(width),
                                         height=torch.as_tensor(height)))
 
-            self.graph_annotations.update({video_id: graph_video})
+            if video_classification_no[0] != 0:
+                self.graph_annotations.update({video_id: graph_video})
+                self.dataset_c_nc.update({video_id: video_c_nc})
+                self.dataset_classification_no.update({video_id: video_classification_no})
 
             if self.pre_filter is not None and not self.pre_filter(graph_video):
                 continue
 
             if self.pre_transform is not None:
                 graph_video = self.pre_transform(graph_video)
-
             torch.save(graph_video, osp.join(self.processed_dir, '{}.pt'.format(video_id)))
 
     def len(self):
@@ -289,6 +305,17 @@ class JAAD(Dataset):
 
         return trainingDataset, validationDataset
 
+    def get_video_c_nc(self, video_id):
+        if video_id in self.dataset_c_nc.keys():
+            return self.dataset_c_nc[video_id]
+        else:
+            return None
+
+    def get_video_classification_no(self, video_id):
+        if video_id in self.dataset_classification_no.keys():
+            return self.dataset_classification_no[video_id]
+        else:
+            return None
 
 
 

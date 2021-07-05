@@ -55,15 +55,11 @@ class social_stgcn(torch.nn.Module):
 
 
     def forward(self, data, device):
-        x, edge_index = data.x.cuda(), \
-                                  data.edge_index.cuda()
+        x, edge_index = data.x.cuda(), data.edge_index.cuda()
 
-        x = torch.cat([x,
-                       torch.zeros(size=(self.input_feat-x.size()[0],
+        x = torch.cat([x, torch.zeros(size=(self.input_feat-x.size()[0],
                                          x.size()[1]), device=device)], 0)
-        x = torch.cat([x,
-                       torch.zeros(size=(x.size()[0],
-                                         self.input_feat - x.size()[1]), device=device)], 1)
+        x = torch.cat([x, torch.zeros(size=(x.size()[0], self.input_feat - x.size()[1]), device=device)], 1)
 
         h = [None for i in range(self.no_lstm)]
         c = [None for i in range(self.no_lstm)]

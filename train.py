@@ -58,7 +58,7 @@ def main(configuration):
                          .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         model.train()
         for epoch in range(epoch_range):
-            if epoch_range > 1: sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
+            if epoch_range > 1:sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
             total_loss = 0
             correct = 0
             total = 0
@@ -80,9 +80,6 @@ def main(configuration):
 
                 out = torch.round(out[[i for i in range(pedestrians)]])
                 y = y[[i for i in range(pedestrians)]]
-                # print("!")
-                # print(frame.classification)
-                # print(y[[i for i in range(pedestrians)]], pedestrians)
                 correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 total = total + torch.sub(out, y).numel()
             accuracy = correct / total

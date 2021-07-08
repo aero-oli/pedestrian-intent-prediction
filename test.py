@@ -28,7 +28,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 2/checkpoint.pth"
+    filename = "saved models/Model 3/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -51,10 +51,14 @@ def main(configuration):
         sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
         sys.stdout.flush()
         for idx_frame, frame in enumerate(video):
+            pedestrians = frame.classification.count(1)
             pred = torch.round(model(frame, device))
             y = torch.cat([frame.y.cuda(),
                            torch.ones(size=[pred.shape[0]-frame.y.shape[0],
                                             frame.y.shape[1]], device=device)*2], dim=0)
+            pred = torch.round(pred[[i for i in range(pedestrians)]])
+            y = y[[i for i in range(pedestrians)]]
+
             comparison = torch.sub(pred, y)
             correct_each_prediction = [pred + comparison[:, it].numel() -
                                        torch.count_nonzero(comparison[:, it])

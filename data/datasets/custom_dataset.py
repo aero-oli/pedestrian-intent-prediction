@@ -156,6 +156,7 @@ class JAAD(Dataset):
         self.graph_annotations = {}
         self.dataset_c_nc = {}
         self.dataset_classification_no = {}
+        self.total_pedestrians = 0
         super(JAAD, self).__init__(root, transform, pre_transform)
 
     @property
@@ -256,13 +257,15 @@ class JAAD(Dataset):
                 self.graph_annotations.update({video_id: graph_video})
                 self.dataset_c_nc.update({video_id: video_c_nc})
                 self.dataset_classification_no.update({video_id: video_classification_no})
+                self.total_pedestrians += video_classification_no[0]
 
-            if self.pre_filter is not None and not self.pre_filter(graph_video):
-                continue
+                if self.pre_filter is not None and not self.pre_filter(graph_video):
+                    continue
 
-            if self.pre_transform is not None:
-                graph_video = self.pre_transform(graph_video)
-            torch.save(graph_video, osp.join(self.processed_dir, '{}.pt'.format(video_id)))
+                if self.pre_transform is not None:
+                    graph_video = self.pre_transform(graph_video)
+
+                torch.save(graph_video, osp.join(self.processed_dir, '{}.pt'.format(video_id)))
 
     def len(self):
         return len(self.processed_file_names)

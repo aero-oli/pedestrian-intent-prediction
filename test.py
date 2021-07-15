@@ -28,7 +28,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 3/checkpoint.pth"
+    filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -66,7 +66,7 @@ def main(configuration):
 
             total_each_prediction = [pred + comparison[:, it].numel()
                                      for it, pred in enumerate(total_each_prediction)]
-
+            
     total = sum(total_each_prediction)
     correct = sum(correct_each_prediction)
     accuracy = correct / total

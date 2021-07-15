@@ -4,6 +4,7 @@ import torch
 import argparse
 import numpy as np
 import sys
+import math
 import collections
 from trainer import Trainer
 import model.loss as lossModule
@@ -39,21 +40,22 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 3/checkpoint.pth"
+    filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
+    # print(model)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)# , weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         # print(dataset.get_video_c_nc(video_name))
-        # print(dataset.get_video_classification_no(video_name))
+        print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
                          .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         model.train()
@@ -67,19 +69,25 @@ def main(configuration):
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
-                out = model(frame.cuda(), device)
+                out = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
                 y = torch.cat([frame.y.cuda(),
                                torch.ones(size=[out.shape[0]-frame.y.shape[0],
-                                                frame.y.shape[1]], device=device)*2], dim=0)
+                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+                # print(out, y)
+                # print(pedestrians)
+
                 loss = torch.mean((out - y) ** 2)
 
-                loss.backward()
-                optimizer.step()
+                if not math.isnan(torch.sum(loss).item()):
+                    total_loss += loss
+                    loss.backward()
+                    # print(loss, total_loss)
+                    optimizer.step()
 
-                total_loss += loss
-
-                out = torch.round(out[[i for i in range(pedestrians)]])
-                y = y[[i for i in range(pedestrians)]]
+                #
+                # out = torch.round(out[[i for i in range(pedestrians)]])
+                # y = y[[i for i in range(pedestrians)]]
+                out = torch.round(out)
                 correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 total = total + torch.sub(out, y).numel()
             accuracy = correct / total
@@ -90,6 +98,7 @@ def main(configuration):
 
         print("Saving Model....")
         torch.save(model.state_dict(), filename)
+
 
     """
     model.eval()

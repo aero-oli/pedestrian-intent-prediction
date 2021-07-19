@@ -38,7 +38,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 1
+    epoch_range = 5
     savePeriod = 1
     filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
@@ -48,7 +48,7 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     # print(model)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)#, weight_decay=5e-4)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 

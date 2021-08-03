@@ -96,7 +96,7 @@ def main(configuration):
             #if epoch % savePeriod == 0:
             #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
 
-        print("Saving Model....")
+        sys.stdout.write("\nSaving Model....")
         torch.save(model.state_dict(), filename)
 
 

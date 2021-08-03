@@ -1,4 +1,5 @@
 # Implementation of Testing
+import math
 
 import torch
 import sys
@@ -52,31 +53,38 @@ def main(configuration):
         sys.stdout.flush()
         for idx_frame, frame in enumerate(video):
             pedestrians = frame.classification.count(1)
-            pred = torch.round(model(frame, device))
+            prediction = torch.round(model(frame.cuda(), device))[[i for i in range(pedestrians)]]
             y = torch.cat([frame.y.cuda(),
-                           torch.ones(size=[pred.shape[0]-frame.y.shape[0],
-                                            frame.y.shape[1]], device=device)*2], dim=0)
-            pred = torch.round(pred[[i for i in range(pedestrians)]])
-            y = y[[i for i in range(pedestrians)]]
+                           torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
+                                            frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+            prediction = torch.round(prediction)
+            # y = y[[i for i in range(pedestrians)]]
 
-            comparison = torch.sub(pred, y)
-            correct_each_prediction = [pred + comparison[:, it].numel() -
-                                       torch.count_nonzero(comparison[:, it])
-                                       for it, pred in enumerate(correct_each_prediction)]
+            # comparison = torch.sub(pred, y)
+            for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
+                for time_frame, time_specific_prediction in enumerate(pedestrian_prediction):
+                    if not math.isnan(y[pedestrian_in_frame, time_frame]):
+                        total_each_prediction[time_frame] += 1
+                        if time_specific_prediction == y[pedestrian_in_frame, time_frame]:
+                            correct_each_prediction[time_frame] += 1
 
-            total_each_prediction = [pred + comparison[:, it].numel()
-                                     for it, pred in enumerate(total_each_prediction)]
+            # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
+            #                            torch.count_nonzero(comparison[:, it])
+            #                            for it, cor_pred in enumerate(correct_each_prediction)]
+            #
+            # total_each_prediction = [cor_pred + comparison[:, it].numel()
+            #                          for it, cor_pred in enumerate(total_each_prediction)]
             
-    total = sum(total_each_prediction)
-    correct = sum(correct_each_prediction)
-    accuracy = correct / total
+    total_predictions = sum(total_each_prediction)
+    correct_predictions = sum(correct_each_prediction)
+    total_accuracy = correct_predictions / total_predictions
     accuracy_each_prediction = [correct_each_prediction[it] / tot
                                 for it, tot in enumerate(total_each_prediction)]
 
-    print('Final accuracy frames: {:.4f}'.format(accuracy))
+    print('Final accuracy frames: {:.4f}'.format(total_accuracy))
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
+          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
 
     """
     logger = configuration.get_logger("test")

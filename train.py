@@ -40,7 +40,7 @@ def main(configuration):
 
     epoch_range = 5
     savePeriod = 1
-    filename = "saved models/Model 2/checkpoint.pth"
+    filename = "saved models/Model 4/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -53,12 +53,12 @@ def main(configuration):
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
+    model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         # print(dataset.get_video_c_nc(video_name))
         print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
                          .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
-        model.train()
         for epoch in range(epoch_range):
             if epoch_range > 1:sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
             total_loss = 0
@@ -69,14 +69,14 @@ def main(configuration):
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
-                out = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
+                prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
                 y = torch.cat([frame.y.cuda(),
-                               torch.ones(size=[out.shape[0]-frame.y.shape[0],
+                               torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
                                                 frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
-                # print(out, y)
-                # print(pedestrians)
 
-                loss = torch.mean((out - y) ** 2)
+                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
+
+                loss = torch.mean((prediction - y) ** 2)
 
                 if not math.isnan(torch.sum(loss).item()):
                     total_loss += loss
@@ -85,19 +85,20 @@ def main(configuration):
                     optimizer.step()
 
                 #
-                # out = torch.round(out[[i for i in range(pedestrians)]])
+                # prediction = torch.round(prediction[[i for i in range(pedestrians)]])
                 # y = y[[i for i in range(pedestrians)]]
-                out = torch.round(out)
-                correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
-                total = total + torch.sub(out, y).numel()
+                prediction = torch.round(prediction)
+                correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
+                total = total + torch.sub(prediction, y).numel()
             accuracy = correct / total
-            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, "
+                             "Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
 
             #if epoch % savePeriod == 0:
             #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
 
-        sys.stdout.write("\nSaving Model....")
-        torch.save(model.state_dict(), filename)
+    sys.stdout.write("\nSaving Model....")
+    torch.save(model.state_dict(), filename)
 
 
     """

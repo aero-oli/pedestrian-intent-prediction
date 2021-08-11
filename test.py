@@ -4,6 +4,7 @@ import math
 import torch
 import sys
 import argparse
+import numpy as np
 from tqdm import tqdm
 import model.loss as lossModule
 import model.metric as metricModule
@@ -12,7 +13,14 @@ import data_loader.data_loaders as dataModule
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
 
+# Fix random seeds for reproducibility
+SEED = 123
+torch.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.double)
+torch.backends.cudnn.benchmark = False
+torch.autograd.set_detect_anomaly(True)
+np.random.seed(SEED)
 
 def main(configuration):
     """
@@ -29,16 +37,16 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 2/checkpoint.pth"
+    filename = "saved models/Model 4/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)# , weight_decay=5e-4)
 
-    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+    # trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+    validationDataset, trainingDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Loading Model {}...".format(filename))
     model.load_state_dict(torch.load(filename))
@@ -47,37 +55,54 @@ def main(configuration):
     model.eval()
     correct_each_prediction = [0, 0, 0]
     total_each_prediction = [0, 0, 0]
+    correct = 0
+    total = 0
     print("Calculating final accuracy...")
-    for idx_video, (_, video) in enumerate(validationDataset.items()):
-        sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
-        sys.stdout.flush()
-        for idx_frame, frame in enumerate(video):
-            pedestrians = frame.classification.count(1)
-            prediction = torch.round(model(frame.cuda(), device))[[i for i in range(pedestrians)]]
-            y = torch.cat([frame.y.cuda(),
-                           torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
-                                            frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
-            prediction = torch.round(prediction)
-            # y = y[[i for i in range(pedestrians)]]
+    with torch.no_grad():
+        for idx_video, (_, video) in enumerate(validationDataset.items()):
+            sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
+            sys.stdout.flush()
+            for idx_frame, frame in enumerate(video):
+                pedestrians = frame.classification.count(1)
+                prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
+                y = torch.cat([frame.y.cuda(),
+                               torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
+                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
 
-            # comparison = torch.sub(pred, y)
-            for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
-                for time_frame, time_specific_prediction in enumerate(pedestrian_prediction):
-                    if not math.isnan(y[pedestrian_in_frame, time_frame]):
-                        total_each_prediction[time_frame] += 1
-                        if time_specific_prediction == y[pedestrian_in_frame, time_frame]:
-                            correct_each_prediction[time_frame] += 1
+                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
+                prediction = torch.round(prediction)
 
-            # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
-            #                            torch.count_nonzero(comparison[:, it])
-            #                            for it, cor_pred in enumerate(correct_each_prediction)]
-            #
-            # total_each_prediction = [cor_pred + comparison[:, it].numel()
-            #                          for it, cor_pred in enumerate(total_each_prediction)]
-            
+                # y = y[[i for i in range(pedestrians)]]
+
+                # correct += torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
+                correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
+                # nonzero().size(0)
+                total += torch.sub(prediction, y).numel()
+
+
+                # comparison = torch.sub(pred, y)
+                for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
+                    for time_frame, time_specific_prediction in enumerate(pedestrian_prediction):
+                        if not math.isnan(y[pedestrian_in_frame, time_frame]):
+                            total_each_prediction[time_frame] += 1
+                            # print(time_specific_prediction, y[pedestrian_in_frame, time_frame])
+                            if time_specific_prediction == y[pedestrian_in_frame, time_frame]:
+                                correct_each_prediction[time_frame] += 1
+
+                # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
+                #                            torch.count_nonzero(comparison[:, it])
+                #                            for it, cor_pred in enumerate(correct_each_prediction)]
+                #
+                # total_each_prediction = [cor_pred + comparison[:, it].numel()
+                #                          for it, cor_pred in enumerate(total_each_prediction)]
+
+    accuracy = correct / total
+    print(accuracy)
     total_predictions = sum(total_each_prediction)
+    print(total_predictions)
     correct_predictions = sum(correct_each_prediction)
     total_accuracy = correct_predictions / total_predictions
+    print(total_accuracy)
     accuracy_each_prediction = [correct_each_prediction[it] / tot
                                 for it, tot in enumerate(total_each_prediction)]
 

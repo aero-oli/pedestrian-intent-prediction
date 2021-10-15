@@ -38,7 +38,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 5
+    epoch_range = 1
     savePeriod = 1
     filename = "saved models/Model 4/checkpoint.pth"
     print("Getting graph dataset... ")
@@ -46,62 +46,64 @@ def main(configuration):
     dataset = configuration.initialize_object("dataset", customDataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
-    # print(model)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)#, weight_decay=5e-4)
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    loss = torch.nn.BCELoss()
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
     model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
-        # print(dataset.get_video_c_nc(video_name))
         print(dataset.get_video_classification_no(video_name))
-        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
-                         .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
+        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}".format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         for epoch in range(epoch_range):
-            if epoch_range > 1:sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
+            
+            if epoch_range > 1:
+                sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
+
             total_loss = 0
             correct = 0
             total = 0
             video_pedestrians = 0
+
             for time_frame, frame in enumerate(data):
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
                 prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
-                y = torch.cat([frame.y.cuda(),
-                               torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
-                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+                y = torch.cat([frame.y.cuda(), torch.ones(size=[prediction.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
 
-                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
-
-                loss = torch.mean((prediction - y) ** 2)
+                #loss = torch.mean((prediction - y) ** 2)
+                loss = loss(y, prediction)
 
                 if not math.isnan(torch.sum(loss).item()):
                     total_loss += loss
                     loss.backward()
-                    # print(loss, total_loss)
                     optimizer.step()
 
-                #
-                # prediction = torch.round(prediction[[i for i in range(pedestrians)]])
-                # y = y[[i for i in range(pedestrians)]]
                 prediction = torch.round(prediction)
                 correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
                 total = total + torch.sub(prediction, y).numel()
+            
             accuracy = correct / total
-            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, "
-                             "Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
-
-            #if epoch % savePeriod == 0:
-            #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
 
     sys.stdout.write("\nSaving Model....")
     torch.save(model.state_dict(), filename)
 
 
-    """
+if __name__ == "__main__":
+    args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
+    args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
+    args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
+    args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
+
+
+    configuration = ConfigParser.from_args(args)
+    main(configuration)
+
+
+"""
     model.eval()
     correct_each_prediction = [0, 0, 0]
     total_each_prediction = [0, 0, 0]
@@ -132,9 +134,7 @@ def main(configuration):
     print('Final accuracy for specific frame prediction: \n '
           '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
           .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
-    """
     
-    '''
     print("Validation...")
     validationDataLoader = dataLoader.split_validation()
 
@@ -167,14 +167,5 @@ def main(configuration):
                       learningRateScheduler=learningRateScheduler)
 
     trainer.train()
-    '''
 
-if __name__ == "__main__":
-    args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
-    args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
-    args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
-    args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
-
-
-    configuration = ConfigParser.from_args(args)
-    main(configuration)
+"""

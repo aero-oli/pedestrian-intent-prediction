@@ -40,13 +40,12 @@ def main(configuration):
 
     epoch_range = 5
     savePeriod = 1
-    filename = "saved models/Model 4/checkpoint.pth"
+    filename = "saved models/Model 3/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
-    # print(model)
     dataset.to_device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)#, weight_decay=5e-4)
 
@@ -55,7 +54,6 @@ def main(configuration):
     print("Start training...")
     model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
-        # print(dataset.get_video_c_nc(video_name))
         print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
                          .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
@@ -73,8 +71,6 @@ def main(configuration):
                 y = torch.cat([frame.y.cuda(),
                                torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
                                                 frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
-
-                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
 
                 loss = torch.mean((prediction - y) ** 2)
 

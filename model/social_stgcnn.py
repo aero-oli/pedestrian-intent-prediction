@@ -50,11 +50,17 @@ class social_stgcn(torch.nn.Module):
         self.gclstm2 = GCLSTM(in_channels=self.input_feat,
                               out_channels=self.input_feat,
                               K=K, normalization="sym", bias=True)
-        self.gclstm3 = GCLSTM(in_channels=self.input_feat,
-                              out_channels=self.input_feat,
-                              K=K, normalization="sym", bias=True)
+        # self.gclstm3 = GCLSTM(in_channels=self.input_feat,
+        #                       out_channels=self.input_feat,
+        #                       K=K, normalization="sym", bias=True)
+        # self.gclstm4 = GCLSTM(in_channels=self.input_feat,
+        #                       out_channels=self.input_feat,
+        #                       K=K, normalization="sym", bias=True)
+        # self.gclstm5 = GCLSTM(in_channels=self.input_feat,
+        #                       out_channels=self.input_feat,
+        #                       K=K, normalization="sym", bias=True)
 
-        self.no_lstm = 3
+        self.no_lstm = 5
 
         self.linear = nn.Linear(in_features=self.input_feat,
                                 out_features=self.linear_output)
@@ -76,9 +82,11 @@ class social_stgcn(torch.nn.Module):
         x = F.relu(x)
         h[0], c[0] = self.gclstm1(x, edge_index, H=h[0], C=c[0])
         h[1], c[1] = self.gclstm2(h[0], edge_index, H=h[1], C=c[1])
-        h[2], c[2] = self.gclstm3(h[1], edge_index, H=h[2], C=c[2])
+        # h[2], c[2] = self.gclstm3(h[1], edge_index, H=h[2], C=c[2])
+        # h[3], c[3] = self.gclstm3(h[2], edge_index, H=h[3], C=c[3])
+        # h[4], c[4] = self.gclstm3(h[3], edge_index, H=h[4], C=c[4])
 
-        x = F.relu(h[2])
+        x = F.relu(h[1])
         # return F.log_softmax(x, dim=1)
         # return self.gcn(x, edge_index, h)
         # return torch.round(self.gcn(x, edge_index))

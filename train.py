@@ -45,10 +45,14 @@ def main(configuration):
 
     dataset = configuration.initialize_object("dataset", customDataset)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
+
+    model = configuration.initialize_object("model", architectureModule).to(device)
+    print("Build Model Architecture and print to console\n: {}".format(model))
+
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-    loss = torch.nn.BCELoss()
+    #lossFunction = torch.nn.NLLLoss()
+    lossFunction = torch.nn.BCEWithLogitsLoss()
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
@@ -71,10 +75,17 @@ def main(configuration):
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
                 prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
+                #print("\nPrediction: {}".format(prediction))
+                ##print("\nPrediction Shape: {}".format(prediction.size()))
+                #print("\nPrediction Type: {}".format(prediction.type()))
+
                 y = torch.cat([frame.y.cuda(), torch.ones(size=[prediction.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+                #print("\nGround Truth: {}".format(y))
+                #print("\nGround Truth Shape: {}".format(y.size()))
+                #print("\nGround Truth Type: {}".format(y.type()))
 
                 #loss = torch.mean((prediction - y) ** 2)
-                loss = loss(y, prediction)
+                loss = lossFunction(prediction, y)
 
                 if not math.isnan(torch.sum(loss).item()):
                     total_loss += loss
@@ -86,11 +97,10 @@ def main(configuration):
                 total = total + torch.sub(prediction, y).numel()
             
             accuracy = correct / total
-            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
+            sys.stdout.write(", Total Loss: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
 
     sys.stdout.write("\nSaving Model....")
     torch.save(model.state_dict(), filename)
-
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

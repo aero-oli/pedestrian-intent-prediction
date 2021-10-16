@@ -57,4 +57,4 @@ class social_stgcn(torch.nn.Module):
         # return F.log_softmax(x, dim=1)
         # return self.gcn(x, edge_index, h)
         # return torch.round(self.gcn(x, edge_index))
-        return self.linear(x)
+        return torch.log_softmax(self.linear(x), dim=1)

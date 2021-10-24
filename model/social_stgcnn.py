@@ -10,10 +10,11 @@ from torch_geometric_temporal.nn.recurrent import GCLSTM, GConvLSTM
 filters = 32
 
 class social_stgcn(torch.nn.Module):
-    def __init__(self, input_feat=2, Conv_outputs=[5], LSTM_output=[5], K=1, linear_output=3):
+    def __init__(self, input_feat=2, linear_input=0 ,  Conv_outputs=[5], LSTM_output=[5], K=1, linear_output=3):
         super(social_stgcn, self).__init__()
 
         self.input_feat = input_feat
+        self.linear_input = linear_input
         self.Conv_outputs = Conv_outputs
         self.LSTM_output = LSTM_output
         self.linear_output = linear_output
@@ -34,10 +35,14 @@ class social_stgcn(torch.nn.Module):
 
         self.no_lstm = 3
 
-        self.linear = nn.Linear(in_features=self.input_feat, out_features=self.linear_output)
+        self.linear = nn.Linear(in_features=(self.linear_input), out_features=self.linear_output)
+        # self.softmax = nn.Softmax(dim=1)
+
+        self.softmax = nn.LogSoftmax(dim=1)
 
 
-    def forward(self, data, device):
+
+    def forward(self, data, no_pedestrians, device):
         x, edge_index = data.x.cuda(), data.edge_index.cuda()
         x = torch.cat([x, torch.zeros(size=(self.input_feat-x.size()[0], x.size()[1]), device=device)], 0)
         x = torch.cat([x, torch.zeros(size=(x.size()[0], self.input_feat - x.size()[1]), device=device)], 1)
@@ -54,7 +59,11 @@ class social_stgcn(torch.nn.Module):
         h[2], c[2] = self.gclstm3(h[1], edge_index, H=h[2], C=c[2])
 
         x = F.relu(h[2])
-        # return F.log_softmax(x, dim=1)
-        # return self.gcn(x, edge_index, h)
-        # return torch.round(self.gcn(x, edge_index))
-        return torch.log_softmax(self.linear(x), dim=1)
+
+        output = torch.empty([no_pedestrians, 3, 3], device="cuda")
+        x = self.linear(x)
+
+        for i in range(no_pedestrians):
+            output[i] = self.softmax(x[i].reshape([3, 3]))
+        x = output
+        return x

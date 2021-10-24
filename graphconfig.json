@@ -67,10 +67,11 @@
         "type": "social_stgcn",
         "args": {
             "input_feat": 50,
+            "linear_input": 50,
             "Conv_outputs": [45, 40],
             "LSTM_output": [35, 30, 25],
             "K": 15,
-            "linear_output": 3
+            "linear_output": 9
         }
     }
 }

@@ -38,9 +38,9 @@ def main(configuration):
     None
     """
 
-    epoch_range = 1
+    epoch_range = 5
     savePeriod = 1
-    filename = "saved models/Model 4/checkpoint.pth"
+    filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -51,12 +51,13 @@ def main(configuration):
     print("Build Model Architecture and print to console\n: {}".format(model))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-    #lossFunction = torch.nn.NLLLoss()
-    lossFunction = torch.nn.BCEWithLogitsLoss()
+    lossFunction = torch.nn.NLLLoss()
+    # lossFunction = torch.nn.BCEWithLogitsLoss()
+    # lossFunction = torch.nn.CrossEntropyLoss()
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
-    model.train()
+    # model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}".format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
@@ -74,25 +75,32 @@ def main(configuration):
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
-                prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
-                #print("\nPrediction: {}".format(prediction))
-                ##print("\nPrediction Shape: {}".format(prediction.size()))
-                #print("\nPrediction Type: {}".format(prediction.type()))
+                output = model(frame.cuda(), pedestrians, device)[[i for i in range(pedestrians)]]
+                # print("\nPrediction: {}".format(prediction))
+                # print("\nPrediction Shape: {}".format(prediction.size()))
+                # print("\nPrediction Type: {}".format(prediction.type()))
 
-                y = torch.cat([frame.y.cuda(), torch.ones(size=[prediction.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
-                #print("\nGround Truth: {}".format(y))
-                #print("\nGround Truth Shape: {}".format(y.size()))
-                #print("\nGround Truth Type: {}".format(y.type()))
-
+                y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
+                # print("\nGround Truth: {}".format(y))
+                # print("\nGround Truth Shape: {}".format(y.size()))
+                # print("\nGround Truth Type: {}".format(y.type()))
                 #loss = torch.mean((prediction - y) ** 2)
-                loss = lossFunction(prediction, y)
+                loss = lossFunction(output, y)
+                prediction = y.detach().clone()
 
-                if not math.isnan(torch.sum(loss).item()):
+                # print("Pre: ", output)
+                # if not math.isnan(torch.sum(loss).item()):
+                if not prediction.nelement() == 0:
                     total_loss += loss
                     loss.backward()
                     optimizer.step()
+                    # prediction = torch.argmax(output, dim=1)
+                    for i in range(output.size()[0]):
+                        prediction[i] = torch.argmax(output[i], dim=0)
 
-                prediction = torch.round(prediction)
+                # prediction = torch.argmax(prediction, dim=0)
+                # print("Post: ", prediction)
+                # print("Ground truth: ", y)
                 correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
                 total = total + torch.sub(prediction, y).numel()
             

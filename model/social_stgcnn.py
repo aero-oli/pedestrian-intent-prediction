@@ -36,7 +36,6 @@ class social_stgcn(torch.nn.Module):
         self.no_lstm = 3
 
         self.linear = nn.Linear(in_features=(self.linear_input), out_features=self.linear_output)
-        # self.softmax = nn.Softmax(dim=1)
 
         self.softmax = nn.LogSoftmax(dim=1)
 

@@ -37,7 +37,7 @@ class social_stgcn(torch.nn.Module):
 
         self.linear = nn.Linear(in_features=(self.linear_input), out_features=self.linear_output)
 
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.softmax = nn.LogSoftmax(dim=0)
 
 
 
@@ -59,10 +59,10 @@ class social_stgcn(torch.nn.Module):
 
         x = F.relu(h[2])
 
-        output = torch.empty([no_pedestrians, 3, 3], device="cuda")
+        output = torch.empty([no_pedestrians, 3, 1], device="cuda")
         x = self.linear(x)
 
         for i in range(no_pedestrians):
-            output[i] = self.softmax(x[i].reshape([3, 3]))
+            output[i] = self.softmax(x[i].reshape([3, 1]))
         x = output
         return x

@@ -71,21 +71,32 @@ def main(configuration):
             video_pedestrians = 0
 
             for time_frame, frame in enumerate(data):
+
+                #print("***********************************************************")
+                #print("***********************************************************")
+                #print("Current Frame: {}".format(time_frame))
+                
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
+
+                #print("Pedestrians in Current Frame: {}".format(pedestrians))
+                #print("Total Pedestrians in all the frames: {}".format(video_pedestrians))
+
                 optimizer.zero_grad()
                 output = model(frame.cuda(), pedestrians, device)
-                # print("\nPrediction: {}".format(prediction))
-                # print("\nPrediction Shape: {}".format(prediction.size()))
-                # print("\nPrediction Type: {}".format(prediction.type()))
+                #print("Model Output: {}".format(output))
+                #print("Model Output Shape: {}".format(output.size()))
 
-                y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
-                # print("\nGround Truth: {}".format(y))
-                # print("\nGround Truth Shape: {}".format(y.size()))
-                # print("\nGround Truth Type: {}".format(y.type()))
+                #print("frame.y: {}".format(frame.y))
+                #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+                #print("Ground Truth: {}".format(y))
+                #print("Ground Truth Shape: {}".format(y.size()))
 
                 loss = lossFunction(output, y)
                 prediction = y.detach().clone()
+
+                #print("Loss: {}".format(loss))
 
                 if not prediction.nelement() == 0:
                     total_loss += loss
@@ -93,6 +104,8 @@ def main(configuration):
                     optimizer.step()
                     for i in range(output.size()[0]):
                         prediction[i] = torch.argmax(output[i], dim=0)
+
+                #print("Model Prediction: {}".format(prediction))
 
                 correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
                 total = total + torch.sub(prediction, y).numel()

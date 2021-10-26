@@ -74,7 +74,7 @@ def main(configuration):
                 pedestrians = frame.classification.count(1)
                 video_pedestrians += pedestrians
                 optimizer.zero_grad()
-                output = model(frame.cuda(), pedestrians, device)[[i for i in range(pedestrians)]]
+                output = model(frame.cuda(), pedestrians, device)
                 # print("\nPrediction: {}".format(prediction))
                 # print("\nPrediction Shape: {}".format(prediction.size()))
                 # print("\nPrediction Type: {}".format(prediction.type()))

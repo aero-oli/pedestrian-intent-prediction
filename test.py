@@ -64,19 +64,20 @@ def main(configuration):
             sys.stdout.flush()
             for idx_frame, frame in enumerate(video):
                 pedestrians = frame.classification.count(1)
-                prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
+                output = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
                 y = torch.cat([frame.y.cuda(),
                                torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
-                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
 
                 # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
-                prediction = torch.round(prediction)
+                prediction = y.detach().clone()
 
-                # y = y[[i for i in range(pedestrians)]]
+                if not prediction.nelement() == 0:
+                    for i in range(output.size()[0]):
+                        prediction[i] = torch.argmax(output[i], dim=0)
 
-                # correct += torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
                 correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
-                # nonzero().size(0)
+
                 total += torch.sub(prediction, y).numel()
 
 

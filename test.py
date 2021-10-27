@@ -37,7 +37,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 4/checkpoint.pth"
+    filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -53,42 +53,54 @@ def main(configuration):
 
     print("Start testing...")
     model.eval()
-    correct_each_prediction = [0, 0, 0]
-    total_each_prediction = [0, 0, 0]
+    correct_each_prediction = [0]
+    total_each_prediction = [0]
     correct = 0
     total = 0
+
     print("Calculating final accuracy...")
     with torch.no_grad():
         for idx_video, (_, video) in enumerate(validationDataset.items()):
             sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
             sys.stdout.flush()
-            for idx_frame, frame in enumerate(video):
-                pedestrians = frame.classification.count(1)
-                output = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
-                y = torch.cat([frame.y.cuda(),
-                               torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
-                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
 
-                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
+            for time_frame, frame in enumerate(video):
+
+                pedestrians = frame.classification.count(1)
+
+                #print("***********************************************************")
+                #print("***********************************************************")
+                #print("Current Frame: {}".format(time_frame))
+
+                output = model(frame.cuda(), pedestrians, device)
+                #print("Model Output: {}".format(output))
+                #print("Model Output Shape: {}".format(output.size()))
+
+                #print("frame.y: {}".format(frame.y))
+                #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+                #print("Ground Truth: {}".format(y))
+                #print("Ground Truth Shape: {}".format(y.size()))
+
                 prediction = y.detach().clone()
 
                 if not prediction.nelement() == 0:
                     for i in range(output.size()[0]):
                         prediction[i] = torch.argmax(output[i], dim=0)
 
+                #print("Model Prediction: {}".format(prediction))
+
                 correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
-
                 total += torch.sub(prediction, y).numel()
-
 
                 # comparison = torch.sub(pred, y)
                 for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
-                    for time_frame, time_specific_prediction in enumerate(pedestrian_prediction):
-                        if not math.isnan(y[pedestrian_in_frame, time_frame]):
-                            total_each_prediction[time_frame] += 1
-                            # print(time_specific_prediction, y[pedestrian_in_frame, time_frame])
-                            if time_specific_prediction == y[pedestrian_in_frame, time_frame]:
-                                correct_each_prediction[time_frame] += 1
+                    for time_in_frame, time_specific_prediction in enumerate(pedestrian_prediction):
+                        if not math.isnan(y[pedestrian_in_frame, time_in_frame]):
+                            total_each_prediction[time_in_frame] += 1
+                            # print(time_specific_prediction, y[pedestrian_in_frame, time_in_frame])
+                            if time_specific_prediction == y[pedestrian_in_frame, time_in_frame]:
+                                correct_each_prediction[time_in_frame] += 1
 
                 # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
                 #                            torch.count_nonzero(comparison[:, it])
@@ -104,13 +116,21 @@ def main(configuration):
     correct_predictions = sum(correct_each_prediction)
     total_accuracy = correct_predictions / total_predictions
     print(total_accuracy)
-    accuracy_each_prediction = [correct_each_prediction[it] / tot
-                                for it, tot in enumerate(total_each_prediction)]
+    accuracy_each_prediction = [correct_each_prediction[it] / tot for it, tot in enumerate(total_each_prediction)]
 
     print('Final accuracy frames: {:.4f}'.format(total_accuracy))
-    print('Final accuracy for specific frame prediction: \n '
-          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
+    print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
+
+if __name__ == "__main__":
+    args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
+    args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
+    args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
+    args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
+
+    configuration = ConfigParser.from_args(args)
+    main(configuration)
+
+
 
     """
     logger = configuration.get_logger("test")
@@ -169,13 +189,3 @@ def main(configuration):
     log.update({individualMetric.__name__: totalMetrics[i].item() / numberOfSamples for i, individualMetric in enumerate(metrics)})
     logger.info(log)
     """
-
-
-if __name__ == "__main__":
-    args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
-    args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
-    args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
-    args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
-
-    configuration = ConfigParser.from_args(args)
-    main(configuration)

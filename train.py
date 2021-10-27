@@ -38,7 +38,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 5
+    epoch_range = 1
     savePeriod = 1
     filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")

@@ -12,6 +12,7 @@ from parse_config import ConfigParser
 import data_loader.data_loaders as dataModule
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
+from sklearn.metrics import precision_score, recall_score, precision_recall_curve, auc, f1_score, accuracy_score
 
 # Fix random seeds for reproducibility
 SEED = 123
@@ -109,6 +110,13 @@ def main(configuration):
                 # total_each_prediction = [cor_pred + comparison[:, it].numel()
                 #                          for it, cor_pred in enumerate(total_each_prediction)]
 
+    accuracy = accuracy_score()
+    precisionScore = precision_score()
+    recallScore = recall_score()
+    f1Score = f1_score()
+    aucScore = auc()
+
+    """
     accuracy = correct / total
     print(accuracy)
     total_predictions = sum(total_each_prediction)
@@ -120,6 +128,7 @@ def main(configuration):
 
     print('Final accuracy frames: {:.4f}'.format(total_accuracy))
     print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
+    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

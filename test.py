@@ -38,7 +38,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 2/checkpoint.pth"
+    filename = "saved models/Model 3/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -46,8 +46,8 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
 
-    # trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
-    validationDataset, trainingDataset = dataset.split_dataset(validationSplit=0.2)
+    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+    # validationDataset, trainingDataset = dataset.split_dataset(validationSplit=0.248)
 
     print("Loading Model {}...".format(filename))
     model.load_state_dict(torch.load(filename))
@@ -58,6 +58,9 @@ def main(configuration):
     total_each_prediction = [0]
     correct = 0
     total = 0
+
+    print("Total number of train videos: {}".format(len(trainingDataset)))
+    print("Total number of test videos: {}".format(len(validationDataset)))
 
     print("Calculating final accuracy...")
     with torch.no_grad():
@@ -79,8 +82,9 @@ def main(configuration):
 
                 #print("frame.y: {}".format(frame.y))
                 #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
-                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,1].reshape(pedestrians, 1).long()
                 #print("Ground Truth: {}".format(y))
+                #print("Ground Truth type: {}".format(type(y)))
                 #print("Ground Truth Shape: {}".format(y.size()))
 
                 prediction = y.detach().clone()
@@ -90,11 +94,15 @@ def main(configuration):
                         prediction[i] = torch.argmax(output[i], dim=0)
 
                 #print("Model Prediction: {}".format(prediction))
+                #print("Model Prediction type: {}".format(type(prediction)))
+
+                #overallGroundTruth.append(y.tolist())
+                #overallPrediction.append(prediction.tolist())
 
                 correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
                 total += torch.sub(prediction, y).numel()
 
-                # comparison = torch.sub(pred, y)
+                #comparison = torch.sub(prediction, y)
                 for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
                     for time_in_frame, time_specific_prediction in enumerate(pedestrian_prediction):
                         if not math.isnan(y[pedestrian_in_frame, time_in_frame]):
@@ -103,19 +111,31 @@ def main(configuration):
                             if time_specific_prediction == y[pedestrian_in_frame, time_in_frame]:
                                 correct_each_prediction[time_in_frame] += 1
 
-                # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
+                #correct_each_prediction = [cor_pred + comparison[:, it].numel() -
                 #                            torch.count_nonzero(comparison[:, it])
                 #                            for it, cor_pred in enumerate(correct_each_prediction)]
-                #
-                # total_each_prediction = [cor_pred + comparison[:, it].numel()
+                
+                #total_each_prediction = [cor_pred + comparison[:, it].numel()
                 #                          for it, cor_pred in enumerate(total_each_prediction)]
 
-    #accuracy = accuracy_score()
-    #precisionScore = precision_score()
-    #recallScore = recall_score()
-    #f1Score = f1_score()
+    #overallGroundTruth = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruth for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    #overallPrediction = [pedestrianPrediction for videoPrediction in overallPrediction for framePrediction in videoPrediction for pedestrianPrediction in framePrediction]
+
+    #print("Overall Ground Truth: {}".format(overallGroundTruth))
+    #print("Overall Prediction: {}".format(overallPrediction))
+
+    """
+    accuracy = accuracy_score(overallGroundTruth, overallPrediction)
+    precisionScore = precision_score(overallGroundTruth, overallPrediction, average='macro')
+    recallScore = recall_score(overallGroundTruth, overallPrediction, average='macro')
+    f1Score = f1_score(overallGroundTruth, overallPrediction, average='macro')
     #aucScore = auc()
 
+    print("Overall Accuracy: {}".format(accuracy))
+    print("Overall Precision Score: {}".format(precisionScore))
+    print("Overall Recall Score: {}".format(recallScore))
+    print("Overall F1 Score: {}".format(f1Score))
+    """
     accuracy = correct / total
     print(accuracy)
     total_predictions = sum(total_each_prediction)
@@ -127,6 +147,7 @@ def main(configuration):
 
     print('Final accuracy frames: {:.4f}'.format(total_accuracy))
     print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
+
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

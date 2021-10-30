@@ -40,7 +40,7 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 1/checkpoint.pth"
+    filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)

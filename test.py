@@ -38,7 +38,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 1/checkpoint.pth"
+    filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -110,13 +110,12 @@ def main(configuration):
                 # total_each_prediction = [cor_pred + comparison[:, it].numel()
                 #                          for it, cor_pred in enumerate(total_each_prediction)]
 
-    accuracy = accuracy_score()
-    precisionScore = precision_score()
-    recallScore = recall_score()
-    f1Score = f1_score()
-    aucScore = auc()
+    #accuracy = accuracy_score()
+    #precisionScore = precision_score()
+    #recallScore = recall_score()
+    #f1Score = f1_score()
+    #aucScore = auc()
 
-    """
     accuracy = correct / total
     print(accuracy)
     total_predictions = sum(total_each_prediction)
@@ -128,7 +127,6 @@ def main(configuration):
 
     print('Final accuracy frames: {:.4f}'.format(total_accuracy))
     print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
-    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")

@@ -153,7 +153,7 @@ def main(configuration):
     print("Overall Prediction Shape: {}".format(overallPrediction.shape))
     print("Sample Weights Shape: {}".format(sampleWeights.shape))
 
-    accuracy = balanced_accuracy_score(overallGroundTruthTesting, overallPrediction, sample_weight=sampleWeights)
+    accuracy = accuracy_score(overallGroundTruthTesting, overallPrediction, sample_weight=sampleWeights)
     precisionScore = precision_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
     recallScore = recall_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
     f1Score = f1_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)

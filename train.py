@@ -51,10 +51,12 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     print("Build Model Architecture and print to console\n: {}".format(model))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    lossFunction = torch.nn.NLLLoss()
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
+    """
     #Calculate class weights before trainig and setting up loss function
     overallGroundTruth = list()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
@@ -74,7 +76,8 @@ def main(configuration):
     # Setup loss function
     #lossFunction = torch.nn.NLLLoss(weight=classWeights)
     lossFunction = torch.nn.NLLLoss()
-
+    """
+	
     print("Start training...")
     model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):

@@ -12,7 +12,8 @@ from parse_config import ConfigParser
 import data_loader.data_loaders as dataModule
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
-from sklearn.metrics import precision_score, recall_score, precision_recall_curve, auc, f1_score, accuracy_score
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import precision_score, recall_score, precision_recall_curve, auc, f1_score, accuracy_score, balanced_accuracy_score
 
 # Fix random seeds for reproducibility
 SEED = 123
@@ -38,7 +39,7 @@ def main(configuration):
     """
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 3/checkpoint.pth"
+    filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -47,10 +48,26 @@ def main(configuration):
     dataset.to_device(device)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
-    # validationDataset, trainingDataset = dataset.split_dataset(validationSplit=0.248)
 
     print("Loading Model {}...".format(filename))
     model.load_state_dict(torch.load(filename))
+
+    #Calculate class weights before trainig and setting up loss function
+    overallPrediction = list()
+    overallGroundTruth = list()
+    overallGroundTruthTesting = list()
+
+    for idx_data, (video_name, data) in enumerate(validationDataset.items()):
+        for time_frame, frame in enumerate(data):
+            pedestrians = frame.classification.count(1)
+            y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+            overallGroundTruth.append(y.tolist())
+
+    overallGroundTruth = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruth for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallGroundTruth = np.array(overallGroundTruth)
+    classWeights = compute_class_weight(class_weight="balanced", classes=np.unique(overallGroundTruth), y=overallGroundTruth)
+    classWeights = torch.from_numpy(classWeights)
+    print("Class Weights: {}".format(classWeights))
 
     print("Start testing...")
     model.eval()
@@ -82,7 +99,7 @@ def main(configuration):
 
                 #print("frame.y: {}".format(frame.y))
                 #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
-                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,1].reshape(pedestrians, 1).long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
                 #print("Ground Truth: {}".format(y))
                 #print("Ground Truth Shape: {}".format(y.size()))
                 #print("Ground Truth type: {}".format(type(y)))
@@ -93,14 +110,16 @@ def main(configuration):
                 if not prediction.nelement() == 0:
                     for i in range(output.size()[0]):
                         prediction[i] = torch.argmax(output[i], dim=0)
+                    overallGroundTruthTesting.append(y.tolist())
+                    overallPrediction.append(prediction.tolist())
 
                 #print("Model Prediction: {}".format(prediction))
                 #print("Model Prediction Shape: {}".format(prediction.size()))
                 #print("Model Prediction type: {}".format(type(prediction)))
 
-                #overallGroundTruth.append(y.tolist())
-                #overallPrediction.append(prediction.tolist())
 
+
+                """
                 correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
                 total += torch.sub(prediction, y).numel()
 
@@ -119,24 +138,32 @@ def main(configuration):
                 
                 #total_each_prediction = [cor_pred + comparison[:, it].numel()
                 #                          for it, cor_pred in enumerate(total_each_prediction)]
+                """
+           
+    overallGroundTruthTesting = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallPrediction = [pedestrianPrediction for videoPrediction in overallPrediction for framePrediction in videoPrediction for pedestrianPrediction in framePrediction]
+    classWeights = classWeights.detach().cpu().numpy().tolist()
+    sampleWeights = [classWeights[individualPrediction] for individualPrediction in overallPrediction]
 
-    #overallGroundTruth = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruth for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
-    #overallPrediction = [pedestrianPrediction for videoPrediction in overallPrediction for framePrediction in videoPrediction for pedestrianPrediction in framePrediction]
+    overallGroundTruthTesting = np.array(overallGroundTruthTesting)
+    overallPrediction = np.array(overallPrediction)
+    sampleWeights = np.array(sampleWeights)
 
-    #print("Overall Ground Truth: {}".format(overallGroundTruth))
-    #print("Overall Prediction: {}".format(overallPrediction))
+    print("Overall Ground Truth Shape: {}".format(overallGroundTruthTesting.shape))
+    print("Overall Prediction Shape: {}".format(overallPrediction.shape))
+    print("Sample Weights Shape: {}".format(sampleWeights.shape))
 
-    """
-    accuracy = accuracy_score(overallGroundTruth, overallPrediction)
-    precisionScore = precision_score(overallGroundTruth, overallPrediction, average='macro')
-    recallScore = recall_score(overallGroundTruth, overallPrediction, average='macro')
-    f1Score = f1_score(overallGroundTruth, overallPrediction, average='macro')
+    accuracy = balanced_accuracy_score(overallGroundTruthTesting, overallPrediction, sample_weight=sampleWeights)
+    precisionScore = precision_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
+    recallScore = recall_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
+    f1Score = f1_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
     #aucScore = auc()
 
     print("Overall Accuracy: {}".format(accuracy))
     print("Overall Precision Score: {}".format(precisionScore))
     print("Overall Recall Score: {}".format(recallScore))
     print("Overall F1 Score: {}".format(f1Score))
+
     """
     accuracy = correct / total
     print(accuracy)
@@ -149,7 +176,7 @@ def main(configuration):
 
     print('Final accuracy frames: {:.4f}'.format(total_accuracy))
     print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
-
+    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
@@ -219,3 +246,4 @@ if __name__ == "__main__":
     log.update({individualMetric.__name__: totalMetrics[i].item() / numberOfSamples for i, individualMetric in enumerate(metrics)})
     logger.info(log)
     """
+

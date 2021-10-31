@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from parse_config import ConfigParser
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
+from sklearn.utils.class_weight import compute_class_weight
 
 # Fix random seeds for reproducibility
 SEED = 123
@@ -38,9 +39,9 @@ def main(configuration):
     None
     """
 
-    epoch_range = 1
+    epoch_range = 2
     savePeriod = 1
-    filename = "saved models/Model 3/checkpoint.pth"
+    filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -50,10 +51,28 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     print("Build Model Architecture and print to console\n: {}".format(model))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    lossFunction = torch.nn.NLLLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
+
+    #Calculate class weights before trainig and setting up loss function
+    overallGroundTruth = list()
+
+    for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
+        for time_frame, frame in enumerate(data):
+            pedestrians = frame.classification.count(1)
+            y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+            overallGroundTruth.append(y.tolist())
+
+    overallGroundTruth = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruth for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallGroundTruth = np.array(overallGroundTruth)
+    print("Overall ground truth : {}".format(overallGroundTruth))
+    classWeights = compute_class_weight(class_weight="balanced", classes=np.unique(overallGroundTruth), y=overallGroundTruth)
+    classWeights = torch.from_numpy(classWeights)
+    classWeights = classWeights.cuda()
+    print("Class Weights: {}".format(classWeights))
+
+    lossFunction = torch.nn.NLLLoss(weight=classWeights)
 
     print("Start training...")
     model.train()
@@ -89,7 +108,7 @@ def main(configuration):
 
                 #print("frame.y: {}".format(frame.y))
                 #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
-                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,1].reshape(pedestrians, 1).long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
                 #print("Ground Truth: {}".format(y))
                 #print("Ground Truth Shape: {}".format(y.size()))
 
@@ -97,6 +116,7 @@ def main(configuration):
                 prediction = y.detach().clone()
 
                 #print("Loss: {}".format(loss))
+                #print("Loss Shape: {}".format(loss.size()))
 
                 if not prediction.nelement() == 0:
                     total_loss += loss

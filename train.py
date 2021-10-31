@@ -39,7 +39,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 2
+    epoch_range = 1
     savePeriod = 1
     filename = "saved models/Model 1/checkpoint.pth"
     print("Getting graph dataset... ")
@@ -51,13 +51,12 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     print("Build Model Architecture and print to console\n: {}".format(model))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     #Calculate class weights before trainig and setting up loss function
     overallGroundTruth = list()
-
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         for time_frame, frame in enumerate(data):
             pedestrians = frame.classification.count(1)
@@ -72,7 +71,9 @@ def main(configuration):
     classWeights = classWeights.cuda()
     print("Class Weights: {}".format(classWeights))
 
-    lossFunction = torch.nn.NLLLoss(weight=classWeights)
+    # Setup loss function
+    #lossFunction = torch.nn.NLLLoss(weight=classWeights)
+    lossFunction = torch.nn.NLLLoss()
 
     print("Start training...")
     model.train()

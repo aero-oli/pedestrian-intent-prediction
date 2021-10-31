@@ -84,8 +84,9 @@ def main(configuration):
                 #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
                 y = frame.y.cuda()[[i for i in range(pedestrians)]][:,1].reshape(pedestrians, 1).long()
                 #print("Ground Truth: {}".format(y))
-                #print("Ground Truth type: {}".format(type(y)))
                 #print("Ground Truth Shape: {}".format(y.size()))
+                #print("Ground Truth type: {}".format(type(y)))
+                
 
                 prediction = y.detach().clone()
 
@@ -94,6 +95,7 @@ def main(configuration):
                         prediction[i] = torch.argmax(output[i], dim=0)
 
                 #print("Model Prediction: {}".format(prediction))
+                #print("Model Prediction Shape: {}".format(prediction.size()))
                 #print("Model Prediction type: {}".format(type(prediction)))
 
                 #overallGroundTruth.append(y.tolist())

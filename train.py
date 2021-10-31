@@ -106,6 +106,7 @@ def main(configuration):
                         prediction[i] = torch.argmax(output[i], dim=0)
 
                 #print("Model Prediction: {}".format(prediction))
+                #print("Model Prediction Shape: {}".format(prediction.size()))
 
                 correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
                 total = total + torch.sub(prediction, y).numel()

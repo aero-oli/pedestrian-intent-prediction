@@ -59,10 +59,10 @@ class social_stgcn(torch.nn.Module):
 
         x = F.relu(h[2])
 
-        output = torch.empty([no_pedestrians, 2, 1], device="cuda")
+        output = torch.empty([no_pedestrians, 3, 1], device="cuda")
         x = self.linear(x)
         
         for i in range(no_pedestrians):
-            output[i] = self.softmax(x[i].reshape([2, 1]))
+            output[i] = self.softmax(x[i].reshape([3, 1]))
         x = output
         return x

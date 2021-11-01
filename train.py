@@ -41,7 +41,7 @@ def main(configuration):
 
     epoch_range = 1
     savePeriod = 1
-    filename = "saved models/Model 1/checkpoint.pth"
+    filename = "saved models/Model 4/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -59,7 +59,7 @@ def main(configuration):
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         for time_frame, frame in enumerate(data):
             pedestrians = frame.classification.count(1)
-            y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+            y = frame.y.cuda()[[i for i in range(pedestrians)]][:,2].reshape(pedestrians, 1).long()
             overallGroundTruth.append(y.tolist())
 
     overallGroundTruth = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruth for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
@@ -71,7 +71,7 @@ def main(configuration):
     print("Class Weights: {}".format(classWeights))
 
     # Setup loss function
-    lossFunction = torch.nn.NLLLoss(weight=classWeights)
+    lossFunction = torch.nn.NLLLoss()#weight=classWeights)
 	
     print("Start training...")
     model.train()
@@ -107,7 +107,7 @@ def main(configuration):
 
                 #print("frame.y: {}".format(frame.y))
                 #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
-                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
+                y = frame.y.cuda()[[i for i in range(pedestrians)]][:,2].reshape(pedestrians, 1).long()
                 #print("Ground Truth: {}".format(y))
                 #print("Ground Truth Shape: {}".format(y.size()))
 

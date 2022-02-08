@@ -20,14 +20,8 @@ class social_stgcn(torch.nn.Module):
         self.linear_output = linear_output
         self.K = K
 
-        # self.gcn1 = GCNConv(in_channels=self.input_feat, out_channels=self.Conv_outputs[0], improved=True)
-        # self.gcn2 = GCNConv(in_channels=self.Conv_outputs[0], out_channels=self.Conv_outputs[1], improved=True)
         self.gcn1 = GCNConv(in_channels=self.input_feat, out_channels=self.input_feat, improved=True)
         self.gcn2 = GCNConv(in_channels=self.input_feat, out_channels=self.input_feat, improved=True)
-
-        # self.gclstm1 = GConvLSTM(in_channels=self.Conv_outputs[1], out_channels=self.Conv_outputs[1], K=K, normalization="sym", bias=True)
-        # self.gclstm2 = GConvLSTM(in_channels=self.Conv_outputs[1], out_channels=self.Conv_outputs[1], K=K, normalization="sym", bias=True)
-        # self.gclstm3 = GConvLSTM(in_channels=self.Conv_outputs[1], out_channels=self.LSTM_output[0],  K=K, normalization="sym", bias=True)
 
         self.gclstm1 = GCLSTM(in_channels=self.input_feat, out_channels=self.input_feat, K=K, normalization="sym", bias=True)
         self.gclstm2 = GCLSTM(in_channels=self.input_feat, out_channels=self.input_feat, K=K, normalization="sym", bias=True)

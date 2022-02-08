@@ -89,21 +89,9 @@ def main(configuration):
 
                 pedestrians = frame.classification.count(1)
 
-                #print("***********************************************************")
-                #print("***********************************************************")
-                #print("Current Frame: {}".format(time_frame))
-
                 output = model(frame.cuda(), pedestrians, device)
-                #print("Model Output: {}".format(output))
-                #print("Model Output Shape: {}".format(output.size()))
 
-                #print("frame.y: {}".format(frame.y))
-                #y = torch.cat([frame.y.cuda(), torch.ones(size=[output.shape[0]-frame.y.shape[0], frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
                 y = frame.y.cuda()[[i for i in range(pedestrians)]][:,0].reshape(pedestrians, 1).long()
-                #print("Ground Truth: {}".format(y))
-                #print("Ground Truth Shape: {}".format(y.size()))
-                #print("Ground Truth type: {}".format(type(y)))
-                
 
                 prediction = y.detach().clone()
 
@@ -112,34 +100,7 @@ def main(configuration):
                         prediction[i] = torch.argmax(output[i], dim=0)
                     overallGroundTruthTesting.append(y.tolist())
                     overallPrediction.append(prediction.tolist())
-
-                #print("Model Prediction: {}".format(prediction))
-                #print("Model Prediction Shape: {}".format(prediction.size()))
-                #print("Model Prediction type: {}".format(type(prediction)))
-
-
-
-                """
-                correct += torch.sub(prediction, y).numel() - torch.sub(prediction, y).nonzero().size(0)
-                total += torch.sub(prediction, y).numel()
-
-                #comparison = torch.sub(prediction, y)
-                for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
-                    for time_in_frame, time_specific_prediction in enumerate(pedestrian_prediction):
-                        if not math.isnan(y[pedestrian_in_frame, time_in_frame]):
-                            total_each_prediction[time_in_frame] += 1
-                            # print(time_specific_prediction, y[pedestrian_in_frame, time_in_frame])
-                            if time_specific_prediction == y[pedestrian_in_frame, time_in_frame]:
-                                correct_each_prediction[time_in_frame] += 1
-
-                #correct_each_prediction = [cor_pred + comparison[:, it].numel() -
-                #                            torch.count_nonzero(comparison[:, it])
-                #                            for it, cor_pred in enumerate(correct_each_prediction)]
-                
-                #total_each_prediction = [cor_pred + comparison[:, it].numel()
-                #                          for it, cor_pred in enumerate(total_each_prediction)]
-                """
-           
+      
     overallGroundTruthTesting = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
     overallPrediction = [pedestrianPrediction for videoPrediction in overallPrediction for framePrediction in videoPrediction for pedestrianPrediction in framePrediction]
     classWeights = classWeights.detach().cpu().numpy().tolist()
@@ -149,34 +110,15 @@ def main(configuration):
     overallPrediction = np.array(overallPrediction)
     sampleWeights = np.array(sampleWeights)
 
-    print("Overall Ground Truth Shape: {}".format(overallGroundTruthTesting.shape))
-    print("Overall Prediction Shape: {}".format(overallPrediction.shape))
-    print("Sample Weights Shape: {}".format(sampleWeights.shape))
-
     accuracy = accuracy_score(overallGroundTruthTesting, overallPrediction, sample_weight=sampleWeights)
     precisionScore = precision_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
     recallScore = recall_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
     f1Score = f1_score(overallGroundTruthTesting, overallPrediction, average='weighted', sample_weight=sampleWeights)
-    #aucScore = auc()
 
     print("Overall Accuracy: {}".format(accuracy))
     print("Overall Precision Score: {}".format(precisionScore))
     print("Overall Recall Score: {}".format(recallScore))
     print("Overall F1 Score: {}".format(f1Score))
-
-    """
-    accuracy = correct / total
-    print(accuracy)
-    total_predictions = sum(total_each_prediction)
-    print(total_predictions)
-    correct_predictions = sum(correct_each_prediction)
-    total_accuracy = correct_predictions / total_predictions
-    print(total_accuracy)
-    accuracy_each_prediction = [correct_each_prediction[it] / tot for it, tot in enumerate(total_each_prediction)]
-
-    print('Final accuracy frames: {:.4f}'.format(total_accuracy))
-    print('Final accuracy for specific frame prediction: \n 15 frames: {:.4f}'.format(accuracy_each_prediction[0]))
-    """
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
@@ -186,64 +128,3 @@ if __name__ == "__main__":
 
     configuration = ConfigParser.from_args(args)
     main(configuration)
-
-
-
-    """
-    logger = configuration.get_logger("test")
-
-    # Setup Data loader Instances
-    dataLoader = getattr(dataModule, configuration["dataLoader"]["type"])(
-                                                                            configuration['dataLoader']['args']['dataDirectory'],
-                                                                            batchSize=512,
-                                                                            shuffle=False,
-                                                                            validationSplit=0.0,
-                                                                            training=False,
-                                                                            numberOfWorkers=1
-                                                                        )
-
-    # Build Model Architecture and print to console
-    model = configuration.init_obj("architecture", architectureModule)
-    logger.info(model)
-
-    # Get function handles of loss and metrics
-    criterion = getattr(lossModule, configuration["loss"])
-    metrics = [getattr(metricModule, individualMetric) for individualMetric in configuration["metrics"]]
-
-    # Load saved checkpoint if the testing is resumed from a checkpoint
-    logger.info('Loading checkpoint: {} ...'.format(configuration.resume))
-    checkpoint = torch.load(configuration.resume)
-    stateDictionary = checkpoint["stateDictionary"]
-    if configuration["numberOfGpus"] > 1:
-        model = torch.nn.DataParallel(model)
-    model.load_state_dict(stateDictionary)
-
-    # Prepare model for testing
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    model.eval()
-
-    # Initialize testing metrics and start testing
-    totalLoss = 0.0
-    totalMetrics = torch.zeros(len(metrics))
-    with torch.no_grad():
-        for i, (data, target) in enumerate(tqdm(dataLoader)):
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-
-            # Save sample images, or do something with output here
-
-            # Compute loss and metrics on test set
-            loss = criterion(output, target)
-            batchSize = data.shape[0]
-            totalLoss += loss.item() * batchSize
-            for i, individualMetric in enumerate(metrics):
-                totalMetrics[i] += individualMetric(output, target) * batchSize
-
-    # Update log to include loss
-    numberOfSamples = len(dataLoader.sampler)
-    log = {"loss": totalLoss / numberOfSamples}
-    log.update({individualMetric.__name__: totalMetrics[i].item() / numberOfSamples for i, individualMetric in enumerate(metrics)})
-    logger.info(log)
-    """
-

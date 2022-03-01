@@ -206,7 +206,7 @@ class JAAD(Dataset):
                         # therefore only pedestrian with C/NC are left.
 
                         if behavior_anno:
-                            # Includes behavior annotations if included in graphconfig.json
+                            # Includes behavior annotations if included in refractor-config.json
                             node_behavior = np.vstack([node_behavior, np.array(
                                 [int(object_behavior_value) for object_behavior_id, object_behavior_value in
                                  object_value['behavior'].items()])])
@@ -217,13 +217,13 @@ class JAAD(Dataset):
                                 video_c_nc[1] += 1
 
                         if attributes_anno:
-                            # Includes attributes annotations if included in graphconfig.json
+                            # Includes attributes annotations if included in refractor-config.json
                             node_attributes = np.vstack([node_attributes, np.array(
                                 [int(node_attributes_value) for node_attributes_id, node_attributes_value in
                                  object_value['attributes'].items() if not node_attributes_id == 'old_id'])])
 
                         if appearance_anno:
-                            # Includes appearance annotations if included in graphconfig.json
+                            # Includes appearance annotations if included in refractor-config.json
                             node_appearance = np.vstack([node_appearance, np.array(
                                 [int(object_appearance_value) for object_appearance_id, object_appearance_value in
                                  object_value['appearance'].items()])])

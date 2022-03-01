@@ -1,17 +1,13 @@
 # Implementation of Testing
-import math
-
 import torch
 import sys
 import argparse
 import numpy as np
-from tqdm import tqdm
-import model.loss as lossModule
-import model.metric as metricModule
 from parse_config import ConfigParser
-import data_loader.data_loaders as dataModule
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+
 
 # Fix random seeds for reproducibility
 SEED = 123
@@ -35,9 +31,8 @@ def main(configuration):
     -------
     None
     """
-    epoch_range = 1
-    savePeriod = 1
-    filename = "saved models/Model 3/checkpoint.pth"
+
+    filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
     dataset = configuration.initialize_object("dataset", customDataset)
@@ -45,117 +40,117 @@ def main(configuration):
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
 
-    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2) # Testing with validation dataset
-    # validationDataset, trainingDataset = dataset.split_dataset(validationSplit=0.2) ## Testing with training dataset
+    trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)  # Testing with validation dataset
 
     print("Loading Model {}...".format(filename))
     model.load_state_dict(torch.load(filename))
 
+    # Calculate class weights before training and setting up loss function
+    overallPrediction15 = list()
+    overallPrediction30 = list()
+    overallPrediction45 = list()
+    overallGroundTruth = list()
+    overallGroundTruthTesting15 = list()
+    overallGroundTruthTesting30 = list()
+    overallGroundTruthTesting45 = list()
+
+    for idx_data, (video_name, data) in enumerate(validationDataset.items()):
+        for time_frame, frame in enumerate(data):
+            pedestrians = frame.classification.count(1)
+            y = frame.y.cuda()[[i for i in range(pedestrians)]][:, 0].reshape(pedestrians, 1).long()
+            overallGroundTruth.append(y.tolist())
+
     print("Start testing...")
     model.eval()
-    correct_each_prediction = [0, 0, 0]
-    total_each_prediction = [0, 0, 0]
-    correct = 0
-    total = 0
+
+    print("Total number of train videos: {}".format(len(trainingDataset)))
+    print("Total number of test videos: {}".format(len(validationDataset)))
+
     print("Calculating final accuracy...")
     with torch.no_grad():
         for idx_video, (_, video) in enumerate(validationDataset.items()):
             sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
             sys.stdout.flush()
+
             for idx_frame, frame in enumerate(video):
                 pedestrians = frame.classification.count(1)
-                prediction = torch.round(model(frame.cuda(), device))[[i for i in range(pedestrians)]]
+                prediction = torch.round(model(frame.cuda(), device))[[i for i in range(pedestrians)]].long()
                 y = torch.cat([frame.y.cuda(),
                                torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
-                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
+                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]].long()
 
-                # print("Prediciton: {}, Ground truth: {}".format(prediction, y))
+                if not prediction.nelement() == 0:
+                    overallGroundTruthTesting15.append(y[:, 0].reshape(-1, 1).tolist())
+                    overallPrediction15.append(prediction[:, 0].reshape(-1, 1).tolist())
+                    overallGroundTruthTesting30.append(y[:, 1].reshape(-1, 1).tolist())
+                    overallPrediction30.append(prediction[:, 1].reshape(-1, 1).tolist())
+                    overallGroundTruthTesting45.append(y[:, 2].reshape(-1, 1).tolist())
+                    overallPrediction45.append(prediction[:, 2].reshape(-1, 1).tolist())
 
-                # comparison = torch.sub(pred, y)
-                for pedestrian_in_frame, pedestrian_prediction in enumerate(prediction):
-                    for time_frame, time_specific_prediction in enumerate(pedestrian_prediction):
-                        if not math.isnan(y[pedestrian_in_frame, time_frame]):
-                            total_each_prediction[time_frame] += 1
-                            # print(time_specific_prediction, y[pedestrian_in_frame, time_frame])
-                            if time_specific_prediction == y[pedestrian_in_frame, time_frame]:
-                                correct_each_prediction[time_frame] += 1
 
-                # correct_each_prediction = [cor_pred + comparison[:, it].numel() -
-                #                            torch.count_nonzero(comparison[:, it])
-                #                            for it, cor_pred in enumerate(correct_each_prediction)]
-                #
-                # total_each_prediction = [cor_pred + comparison[:, it].numel()
-                #                          for it, cor_pred in enumerate(total_each_prediction)]
+    overallGroundTruthTesting15 = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting15 for
+                                 frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallPrediction15 = [pedestrianPrediction for videoPrediction in overallPrediction15 for framePrediction in
+                         videoPrediction for pedestrianPrediction in framePrediction]
 
-    accuracy = correct / total
-    total_predictions = sum(total_each_prediction)
-    correct_predictions = sum(correct_each_prediction)
-    total_accuracy = correct_predictions / total_predictions
-    accuracy_each_prediction = [correct_each_prediction[it] / tot
-                                for it, tot in enumerate(total_each_prediction)]
+    overallGroundTruthTesting30 = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting30 for
+                                 frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallPrediction30 = [pedestrianPrediction for videoPrediction in overallPrediction30 for framePrediction in
+                         videoPrediction for pedestrianPrediction in framePrediction]
 
-    print('Final accuracy frames: {:.4f}'.format(total_accuracy))
-    print('Final accuracy for specific frame prediction: \n '
-          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[0], accuracy_each_prediction[1], accuracy_each_prediction[2]))
+    overallGroundTruthTesting45 = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting45 for
+                                 frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
+    overallPrediction45 = [pedestrianPrediction for videoPrediction in overallPrediction45 for framePrediction in
+                         videoPrediction for pedestrianPrediction in framePrediction]
 
-    """
-    logger = configuration.get_logger("test")
+    overallGroundTruthTesting15 = np.array(overallGroundTruthTesting15)
+    overallPrediction15 = np.array(overallPrediction15)
 
-    # Setup Data loader Instances
-    dataLoader = getattr(dataModule, configuration["dataLoader"]["type"])(
-                                                                            configuration['dataLoader']['args']['dataDirectory'],
-                                                                            batchSize=512,
-                                                                            shuffle=False,
-                                                                            validationSplit=0.0,
-                                                                            training=False,
-                                                                            numberOfWorkers=1
-                                                                        )
+    overallGroundTruthTesting30 = np.array(overallGroundTruthTesting30)
+    overallPrediction30 = np.array(overallPrediction30)
 
-    # Build Model Architecture and print to console
-    model = configuration.init_obj("architecture", architectureModule)
-    logger.info(model)
+    overallGroundTruthTesting45 = np.array(overallGroundTruthTesting45)
+    overallPrediction45 = np.array(overallPrediction45)
 
-    # Get function handles of loss and metrics
-    criterion = getattr(lossModule, configuration["loss"])
-    metrics = [getattr(metricModule, individualMetric) for individualMetric in configuration["metrics"]]
+    print("Overall Ground Truth 15f Shape: {}".format(overallGroundTruthTesting15.shape))
+    print("Overall Prediction 15f Shape: {}".format(overallPrediction15.shape))
+    print("Overall Ground Truth 30f Shape: {}".format(overallGroundTruthTesting30.shape))
+    print("Overall Prediction 30f Shape: {}".format(overallPrediction30.shape))
+    print("Overall Ground Truth 45f Shape: {}".format(overallGroundTruthTesting45.shape))
+    print("Overall Prediction 45f Shape: {}".format(overallPrediction45.shape))
 
-    # Load saved checkpoint if the testing is resumed from a checkpoint
-    logger.info('Loading checkpoint: {} ...'.format(configuration.resume))
-    checkpoint = torch.load(configuration.resume)
-    stateDictionary = checkpoint["stateDictionary"]
-    if configuration["numberOfGpus"] > 1:
-        model = torch.nn.DataParallel(model)
-    model.load_state_dict(stateDictionary)
 
-    # Prepare model for testing
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    model.eval()
+    ## 15
+    accuracy15 = accuracy_score(overallGroundTruthTesting15, overallPrediction15)
+    precisionScore15 = precision_score(overallGroundTruthTesting15, overallPrediction15, average=None)
+    recallScore15 = recall_score(overallGroundTruthTesting15, overallPrediction15, average=None)
+    f1Score15 = f1_score(overallGroundTruthTesting15, overallPrediction15, average=None)
 
-    # Initialize testing metrics and start testing
-    totalLoss = 0.0
-    totalMetrics = torch.zeros(len(metrics))
-    with torch.no_grad():
-        for i, (data, target) in enumerate(tqdm(dataLoader)):
-            data, target = data.to(device), target.to(device)
-            output = model(data)
+    ## 30
+    accuracy30 = accuracy_score(overallGroundTruthTesting30, overallPrediction30)
+    precisionScore30 = precision_score(overallGroundTruthTesting30, overallPrediction30, average=None)
+    recallScore30 = recall_score(overallGroundTruthTesting30, overallPrediction30, average=None)
+    f1Score30 = f1_score(overallGroundTruthTesting30, overallPrediction30, average=None)
 
-            # Save sample images, or do something with output here
+    ## 45
+    accuracy45 = accuracy_score(overallGroundTruthTesting45, overallPrediction45)
+    precisionScore45 = precision_score(overallGroundTruthTesting45, overallPrediction45, average=None)
+    recallScore45 = recall_score(overallGroundTruthTesting45, overallPrediction45, average=None)
+    f1Score45 = f1_score(overallGroundTruthTesting45, overallPrediction45, average=None)
+    # aucScore = auc()
 
-            # Compute loss and metrics on test set
-            loss = criterion(output, target)
-            batchSize = data.shape[0]
-            totalLoss += loss.item() * batchSize
-            for i, individualMetric in enumerate(metrics):
-                totalMetrics[i] += individualMetric(output, target) * batchSize
-
-    # Update log to include loss
-    numberOfSamples = len(dataLoader.sampler)
-    log = {"loss": totalLoss / numberOfSamples}
-    log.update({individualMetric.__name__: totalMetrics[i].item() / numberOfSamples for i, individualMetric in enumerate(metrics)})
-    logger.info(log)
-    """
+    print("Overall Accuracy 15f: {}".format(accuracy15))
+    print("Overall Accuracy 30f: {}".format(accuracy30))
+    print("Overall Accuracy 45f: {}".format(accuracy45))
+    print("Overall Precision 15f Score: {}".format(precisionScore15))
+    print("Overall Precision 30f Score: {}".format(precisionScore30))
+    print("Overall Precision 45f Score: {}".format(precisionScore45))
+    print("Overall Recall 15f Score: {}".format(recallScore15))
+    print("Overall Recall 30f Score: {}".format(recallScore30))
+    print("Overall Recall 45f Score: {}".format(recallScore45))
+    print("Overall F1 15f Score: {}".format(f1Score15))
+    print("Overall F1 30f Score: {}".format(f1Score30))
+    print("Overall F1 45f Score: {}".format(f1Score45))
 
 
 if __name__ == "__main__":

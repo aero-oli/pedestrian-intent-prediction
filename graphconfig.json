@@ -12,7 +12,11 @@
         "args":
         {
             "original_annotations": "data/datasets/overall_frame_by_frame_database.pkl",
-            "root": "data/datasets/"
+            "root": "data/datasets/",
+            "included_annotations": ["behavior"],
+            "appearence_size": 25,
+            "attributes_size": 12,
+            "behavior_size": 6
         }
     },
     "dataLoader":
@@ -66,7 +70,7 @@
     "model": {
         "type": "social_stgcn",
         "args": {
-            "input_feat": 50,
+            "input_feat": 17,
             "Conv_outputs": [45, 40],
             "LSTM_output": [35, 30, 25],
             "K": 15,

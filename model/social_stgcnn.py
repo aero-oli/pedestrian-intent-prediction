@@ -1,10 +1,9 @@
 
-# Import libraries
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch_geometric.nn import GCNConv, Sequential
+from torch_geometric.nn import GCNConv
 from torch_geometric_temporal.nn.recurrent import GCLSTM, GConvLSTM
 
 filters = 32
@@ -69,10 +68,11 @@ class social_stgcn(torch.nn.Module):
     def forward(self, data, device):
         x, edge_index = data.x.cuda(), data.edge_index.cuda()
 
-        x = torch.cat([x, torch.zeros(size=(self.input_feat-x.size()[0],
-                                         x.size()[1]), device=device)], 0)
+        # Zero padding the input to fit the input features
+        x = torch.cat([x, torch.zeros(size=(self.input_feat - x.size()[0], x.size()[1]), device=device)], 0)
         x = torch.cat([x, torch.zeros(size=(x.size()[0], self.input_feat - x.size()[1]), device=device)], 1)
 
+        # Initializing the training variables
         h = [None for i in range(self.no_lstm)]
         c = [None for i in range(self.no_lstm)]
 

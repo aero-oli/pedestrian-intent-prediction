@@ -1,10 +1,12 @@
 # Implementation of Training
+import inspect
 
 import torch
 import argparse
 import numpy as np
 import sys
 import math
+import UpdateConfigFile
 from parse_config import ConfigParser
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
@@ -86,11 +88,11 @@ def main(configuration):
     torch.save(model.state_dict(), filename)
 
 if __name__ == "__main__":
+    UpdateConfigFile.Update(sys.argv[2])
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
     args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
     args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
     args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
-
 
     configuration = ConfigParser.from_args(args)
     main(configuration)

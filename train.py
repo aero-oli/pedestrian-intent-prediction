@@ -1,15 +1,12 @@
 # Implementation of Training
+import inspect
 
 import torch
 import argparse
 import numpy as np
 import sys
-import collections
-from trainer import Trainer
-import model.loss as lossModule
-from utils import prepare_device
-import model.metric as metricModule
-import torch.nn.functional as F
+import math
+import UpdateConfigFile
 from parse_config import ConfigParser
 import model.social_stgcnn as architectureModule
 import data.datasets.custom_dataset as customDataset
@@ -37,8 +34,7 @@ def main(configuration):
     None
     """
 
-    epoch_range = 1
-    savePeriod = 1
+    epoch_range = 5
     filename = "saved models/Model 2/checkpoint.pth"
     print("Getting graph dataset... ")
 
@@ -46,116 +42,57 @@ def main(configuration):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = configuration.initialize_object("model", architectureModule).to(device)
     dataset.to_device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)# , weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0002)#, weight_decay=5e-5)
 
     trainingDataset, validationDataset = dataset.split_dataset(validationSplit=0.2)
 
     print("Start training...")
+    model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
-        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}"
-                         .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
-        model.train()
+        # print(dataset.get_video_classification_no(video_name))
+        sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}, No of pedestrians: {}, No of vehicles: {}"
+                         .format(video_name, idx_data+1, len(trainingDataset.keys()), len(data),
+                                 dataset.get_video_classification_no(video_name)[0],
+                                 dataset.get_video_classification_no(video_name)[1]))
         for epoch in range(epoch_range):
-            if epoch_range > 1: sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
+            if epoch_range > 1:
+                sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
             total_loss = 0
             correct = 0
             total = 0
+            video_pedestrians = 0
             for time_frame, frame in enumerate(data):
+                pedestrians = frame.classification.count(1)
+                video_pedestrians += pedestrians
                 optimizer.zero_grad()
-                out = model(frame.cuda(), device)
-                y = torch.cat([frame.y.cuda(), torch.ones(size=[out.shape[0]-frame.y.shape[0],
-                                                                frame.y.shape[1]], device=device)*2], dim=0)
+                prediction = model(frame.cuda(), device)[[i for i in range(pedestrians)]]
+                y = torch.cat([frame.y.cuda(),
+                               torch.ones(size=[prediction.shape[0]-frame.y.shape[0],
+                                                frame.y.shape[1]], device=device)*2], dim=0)[[i for i in range(pedestrians)]]
 
-                loss = torch.mean((out - y) ** 2)
-                total_loss += loss
-                loss.backward()
-                optimizer.step()
-                out = torch.round(out)
-                correct = correct + torch.sub(out, y).numel() - torch.count_nonzero(torch.sub(out, y))
-                total = total + torch.sub(out, y).numel()
+                loss = torch.mean((prediction - y) ** 2)
+
+                if not math.isnan(torch.sum(loss).item()):
+                    total_loss += loss
+                    loss.backward()
+                    optimizer.step()
+
+                prediction = torch.round(prediction)
+                correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
+                total = total + torch.sub(prediction, y).numel()
             accuracy = correct / total
-            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}".format(total_loss, accuracy))
-
-            #if epoch % savePeriod == 0:
-            #    torch.save(model.state_dict(), filename.format(idx_data+1, epoch))
-
-        print("Saving Model....")
-        torch.save(model.state_dict(), filename)
-
-    """
-    model.eval()
-    correct_each_prediction = [0, 0, 0]
-    total_each_prediction = [0, 0, 0]
-    print("\nCalculating final accuracy...")
-    for idx_video, (_, video) in enumerate(validationDataset.items()):
-        sys.stdout.write("\rTesting video {}/{}".format(idx_video+1, len(validationDataset.keys())))
-        sys.stdout.flush()
-        for idx_frame, frame in enumerate(video):
-            pred = torch.round(model(frame, device))
-            y = torch.cat([frame.y.cuda(),
-                           torch.ones(size=[pred.shape[0]-frame.y.shape[0],
-                                            frame.y.shape[1]], device=device)*2], dim=0)
-            comparison = torch.sub(pred, y)
-            correct_each_prediction = [pred + comparison[:, it].numel() -
-                                       torch.count_nonzero(comparison[:, it])
-                                       for it, pred in enumerate(correct_each_prediction)]
-
-            total_each_prediction = [pred + comparison[:, it].numel()
-                                     for it, pred in enumerate(total_each_prediction)]
-
-    total = sum(total_each_prediction)
-    correct = sum(correct_each_prediction)
-    accuracy = correct / total
-    accuracy_each_prediction = [correct_each_prediction[it] / tot
-                                for it, tot in enumerate(total_each_prediction)]
-
-    print('Final accuracy frames: {:.4f}'.format(accuracy))
-    print('Final accuracy for specific frame prediction: \n '
-          '15 frames: {:.4f}, 30 frames: {:.4f}, 45 frames: {:.4f}'
-          .format(accuracy_each_prediction[2], accuracy_each_prediction[1], accuracy_each_prediction[0]))
-    """
-    
-    '''
-    print("Validation...")
-    validationDataLoader = dataLoader.split_validation()
-
-
-    # Build Model Architecture and print to console
-    print("Build Model Architecture and print to console")
-    model = configuration.initialize_object("architecture", architectureModule)
-    logger.info(model)
-
-    # Prepare for (multi-device) GPU training
-    device, deviceIds = prepare_device(configuration["numberOfGpus"])
-    model = model.to(device)
-    if len(deviceIds) > 1:
-        model = torch.nn.DataParallel(model, device_ids = deviceIds)
-
-    # Get function handles of loss and metrics
-    criterion = getattr(lossModule, configuration["loss"])
-    metrics = [getattr(metricModule, individualMetric) for individualMetric in configuration["metrics"]]
-
-    # Build Optimizer, Learning Rate Scheduler and delete every lines containing lr_scheduler for disabling scheduler
-    trainiableParameters = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = configuration.initialize_object("optimizer", torch.optim, trainiableParameters)
-    learningRateScheduler = configuration.initialize_object("learningRateScheduler", torch.optim.lr_scheduler, optimizer)
-
-    trainer = Trainer(model, criterion, metrics, optimizer,
-                      configuration=configuration,
-                      device=device,
-                      dataLoader=dataLoader,
-                      validationDataLoader=validationDataLoader,
-                      learningRateScheduler=learningRateScheduler)
-
-    trainer.train()
-    '''
+            sys.stdout.write(", MSE: {:.4f}, Accuracy: {:.4f}, "
+                             "Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
+        sys.stdout.write("\n")
+    sys.stdout.write("\nSaving Model....")
+    torch.save(model.state_dict(), filename)
 
 if __name__ == "__main__":
+    UpdateConfigFile.Update(sys.argv[2])
     args = argparse.ArgumentParser(description="Script to train Graph Neural Network")
     args.add_argument("-c", "--config", default=None, type=str, help="Path to the configuration file (Default: None)")
     args.add_argument("-r", "--resume", default=None, type=str, help="Path to the latest checkpoint (Default: None)")
     args.add_argument("-d", "--device", default=None, type=str, help="Index of the GPU used (Default: None)")
-
 
     configuration = ConfigParser.from_args(args)
     main(configuration)

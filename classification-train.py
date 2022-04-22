@@ -12,7 +12,7 @@ from utils import prepare_device
 import model.metric as metricModule
 import torch.nn.functional as F
 from parse_config import ConfigParser
-import model.social_stgcnn as architectureModule
+import model.social_stgcnn_classification as architectureModule
 import data.datasets.custom_dataset as customDataset
 from sklearn.utils.class_weight import compute_class_weight
 
@@ -72,14 +72,14 @@ def main(configuration):
 
     # Setup loss function
     lossFunction = torch.nn.NLLLoss()#weight=classWeights)
-	
+
     print("Start training...")
     model.train()
     for idx_data, (video_name, data) in enumerate(trainingDataset.items()):
         print(dataset.get_video_classification_no(video_name))
         sys.stdout.write("\nTrainging {}, Video: {}/{}, Number of frames:{}".format(video_name, idx_data+1, len(trainingDataset.keys()), len(data)))
         for epoch in range(epoch_range):
-            
+
             if epoch_range > 1:
                 sys.stdout.write("\nEpoch: {}/{}".format(epoch+1, epoch_range))
 
@@ -95,12 +95,12 @@ def main(configuration):
 
                 optimizer.zero_grad()
                 output = model(frame.cuda(), pedestrians, device)
-                
+
                 y = frame.y.cuda()[[i for i in range(pedestrians)]][:,2].reshape(pedestrians, 1).long()
-                
+
                 loss = lossFunction(output, y)
                 prediction = y.detach().clone()
-                
+
                 if not prediction.nelement() == 0:
                     total_loss += loss
                     loss.backward()
@@ -110,7 +110,7 @@ def main(configuration):
 
                 correct = correct + torch.sub(prediction, y).numel() - torch.count_nonzero(torch.sub(prediction, y))
                 total = total + torch.sub(prediction, y).numel()
-            
+
             accuracy = correct / total
             sys.stdout.write(", Total Loss: {:.4f}, Accuracy: {:.4f}, Pedestrians: {}".format(total_loss, accuracy, video_pedestrians))
 

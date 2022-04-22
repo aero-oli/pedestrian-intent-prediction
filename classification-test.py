@@ -10,7 +10,7 @@ import model.loss as lossModule
 import model.metric as metricModule
 from parse_config import ConfigParser
 import data_loader.data_loaders as dataModule
-import model.social_stgcnn as architectureModule
+import model.social_stgcnn_classification as architectureModule
 import data.datasets.custom_dataset as customDataset
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import precision_score, recall_score, precision_recall_curve, auc, f1_score, accuracy_score, balanced_accuracy_score
@@ -100,7 +100,7 @@ def main(configuration):
                         prediction[i] = torch.argmax(output[i], dim=0)
                     overallGroundTruthTesting.append(y.tolist())
                     overallPrediction.append(prediction.tolist())
-      
+
     overallGroundTruthTesting = [pedestrianGroundTruth for videoGroundTruth in overallGroundTruthTesting for frameGroundTruth in videoGroundTruth for pedestrianGroundTruth in frameGroundTruth]
     overallPrediction = [pedestrianPrediction for videoPrediction in overallPrediction for framePrediction in videoPrediction for pedestrianPrediction in framePrediction]
     classWeights = classWeights.detach().cpu().numpy().tolist()

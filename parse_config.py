@@ -111,7 +111,7 @@ class ConfigParser:
             configuration.update(read_json(args.config))
 
         # Configure modifications to the command line arguments
-        modification = {individualOption.target : getattr(args, get_option_name(individualOption.flags)) for individualOption in options}
+        modification = {individualOption.target: getattr(args, get_option_name(individualOption.flags)) for individualOption in options}
 
         return cls(configuration, resumePath, modification)
 

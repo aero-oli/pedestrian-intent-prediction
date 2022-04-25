@@ -43,8 +43,10 @@ $bash environment.sh
 1. To activate the Conda environment, please run the following command in the terminal:
 
 ```
-$conda activate $THESIS_VENV
+$conda activate $VENV
 ```
+
+The parameter `$VENV` is the name of the Anaconda environment defined in the file `environment.sh`.
 
 2. Train or Test the network in the Conda environment using the below command in terminal:
 
@@ -65,8 +67,10 @@ $conda deactivate
 To remove the anaconda environment, navigate to the repository folder, and run the following command in the terminal:
 
 ```
-$conda remove --name $THESIS_VENV --all
+$conda remove --name $VENV --all
 ```
+
+The parameter `$VENV` is the name of the Anaconda environment defined in the file `environment.sh`.
 
 ## Authors
 * Aren Moosakhanian

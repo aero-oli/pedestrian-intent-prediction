@@ -224,7 +224,7 @@ def jaad_annotation_converter(dataset, print_variation=False):
 
     :return (dict): jaad annotations in on a complete frame-by-frame order
     '''
-    prediction_length = [45]
+    prediction_length = [15, 30, 45]
 
     new_annotations = {}
     vehicle_type_variation = []
